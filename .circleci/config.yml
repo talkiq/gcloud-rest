@@ -1,0 +1,127 @@
+version: 2
+
+jobs:
+  lint-py2:
+    docker:
+      - image: python:2.7.14
+    steps:
+      - checkout
+      - run: pip install pre-commit
+      - run: pre-commit run --all-files
+
+  lint-py3:
+    docker:
+      - image: python:3.6.2
+    steps:
+      - checkout
+      - run: pip install pre-commit
+      - run: pre-commit run --all-files
+
+  test:
+    docker:
+      - image: googleapis/nox:0.17.0
+    steps:
+      - run: echo ${GOOGLE_SERVICE_JSON} | base64 -d > ${GOOGLE_APPLICATION_CREDENTIALS}
+      - checkout
+      - run: nox -f gcloud-rest/nox.py
+
+  pypi-py2:
+    docker:
+      - image: python:2.7.14-alpine3.6
+    steps:
+      - run: pip install twine
+      - checkout
+      - deploy:
+          name: upload to pypi
+          command: |
+            cd gcloud-rest
+            python setup.py sdist bdist_wheel
+            twine upload dist/*
+
+  pypi-py3:
+    docker:
+      - image: python:3.6.2-alpine3.6
+    steps:
+      - run: pip install twine
+      - checkout
+      - deploy:
+          name: upload to pypi
+          command: |
+            cd gcloud-rest
+            python setup.py sdist bdist_wheel
+            twine upload dist/*
+
+  github:
+    docker:
+      - image: python:3.6.2-alpine3.6
+    steps:
+      - run: apk add --no-cache curl git openssh-client
+      - checkout
+      - run:
+          name: install github-release
+          command: |
+            curl -L https://github.com/aktau/github-release/releases/download/v0.7.2/linux-amd64-github-release.tar.bz2 > github-release.tar.bz2
+            tar xjf github-release.tar.bz2
+            rm -f github-release.tar.bz2
+      - deploy:
+          name: create GitHub release
+          command: |
+            export PREV_RELEASE=$(git tag --sort=version:refname | tail -n2 | head -n1)
+            [ "${PREV_RELEASE}" = "${CIRCLE_TAG}" ] && export PREV_RELEASE=$(git rev-list --max-parents=0 HEAD)
+            [ -z "${PREV_RELEASE}" ] && export PREV_RELEASE=$(git rev-list --max-parents=0 HEAD)
+
+            git log ${PREV_RELEASE}..${CIRCLE_TAG} --pretty=format:'- %s' > release-description.md
+            ./bin/linux/amd64/github-release release -t "${CIRCLE_TAG}"
+            cat release-description.md | ./bin/linux/amd64/github-release edit -t ${CIRCLE_TAG} -d -
+
+workflows:
+  version: 2
+  run-jobs:
+    jobs:
+      - lint-py2:
+          filters:
+            tags:
+              only: /.*/
+      - lint-py3:
+          filters:
+            tags:
+              only: /.*/
+
+      - test:
+          filters:
+            tags:
+              only: /.*/
+
+      - pypi-py2:
+          context: org-global
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /[0-9]+\.[0-9]+\.[0-9]+/
+          requires:
+            - lint-py2
+            - lint-py3
+            - test
+      - pypi-py3:
+          context: org-global
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /[0-9]+\.[0-9]+\.[0-9]+/
+          requires:
+            - lint-py2
+            - lint-py3
+            - test
+      - github:
+          context: org-global
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /[0-9]+\.[0-9]+\.[0-9]+/
+          requires:
+            - lint-py2
+            - lint-py3
+            - test
