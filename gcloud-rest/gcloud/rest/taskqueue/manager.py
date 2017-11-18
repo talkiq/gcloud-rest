@@ -16,7 +16,7 @@ from oauth2client.service_account import ServiceAccountCredentials
 
 log = logging.getLogger(__name__)
 
-# TODO: https://github.com/google/google-api-python-client/issues/299
+# https://github.com/google/google-api-python-client/issues/299
 logging.getLogger('googleapiclient.discovery_cache').setLevel(logging.CRITICAL)
 
 SCOPES = [
