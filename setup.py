@@ -4,7 +4,7 @@ import setuptools
 
 
 PACKAGE_ROOT = os.path.abspath(os.path.dirname(__file__))
-with open(os.path.join(PACKAGE_ROOT, '..', 'README.rst')) as f:
+with open(os.path.join(PACKAGE_ROOT, 'README.rst')) as f:
     README = f.read()
 
 with open(os.path.join(PACKAGE_ROOT, 'requirements.txt')) as f:

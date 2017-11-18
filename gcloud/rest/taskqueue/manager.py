@@ -7,11 +7,12 @@ import time
 import traceback
 
 import httplib2
+from googleapiclient.discovery import build
+from oauth2client.service_account import ServiceAccountCredentials
+
 from gcloud.rest.taskqueue.error import FailFastError
 from gcloud.rest.taskqueue.queue import TaskQueue
 from gcloud.rest.taskqueue.utils import clean_b64decode
-from googleapiclient.discovery import build
-from oauth2client.service_account import ServiceAccountCredentials
 
 
 log = logging.getLogger(__name__)

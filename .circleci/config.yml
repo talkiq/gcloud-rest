@@ -23,7 +23,7 @@ jobs:
     steps:
       - run: echo ${GOOGLE_SERVICE_JSON} | base64 -d > ${GOOGLE_APPLICATION_CREDENTIALS}
       - checkout
-      - run: nox -f gcloud-rest/nox.py
+      - run: nox
 
   pypi-py2:
     docker:
@@ -34,7 +34,6 @@ jobs:
       - deploy:
           name: upload to pypi
           command: |
-            cd gcloud-rest
             python setup.py sdist bdist_wheel
             twine upload dist/*
 
@@ -47,7 +46,6 @@ jobs:
       - deploy:
           name: upload to pypi
           command: |
-            cd gcloud-rest
             python setup.py sdist bdist_wheel
             twine upload dist/*
 

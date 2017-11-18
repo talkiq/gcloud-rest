@@ -1,7 +1,8 @@
-**/*.egg-info/*
-**/.cache/*
+**/*.pyc
 **/__pycache__/*
-**/dist/*
-*/.coverage
-*/build/*
+*.egg-info/*
+.cache/*
+.coverage
 .nox/*
+build/*
+dist/*
