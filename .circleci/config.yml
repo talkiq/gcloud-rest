@@ -25,19 +25,7 @@ jobs:
       - checkout
       - run: nox
 
-  pypi-py2:
-    docker:
-      - image: python:2.7.14-alpine3.6
-    steps:
-      - run: pip install twine
-      - checkout
-      - deploy:
-          name: upload to pypi
-          command: |
-            python setup.py sdist
-            twine upload dist/*
-
-  pypi-py3:
+  pypi:
     docker:
       - image: python:3.6.2-alpine3.6
     steps:
@@ -90,18 +78,7 @@ workflows:
             tags:
               only: /.*/
 
-      - pypi-py2:
-          context: org-global
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /[0-9]+\.[0-9]+\.[0-9]+/
-          requires:
-            - lint-py2
-            - lint-py3
-            - test
-      - pypi-py3:
+      - pypi:
           context: org-global
           filters:
             branches:
