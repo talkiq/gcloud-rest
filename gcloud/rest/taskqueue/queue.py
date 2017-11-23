@@ -21,7 +21,6 @@ class TaskQueue(object):
         self.project = project
         self.task_queue = task_queue
 
-        self.api_root = API_ROOT
         self.access_token = Token(creds=creds, scopes=SCOPES)
 
         self.default_header = {
@@ -39,7 +38,7 @@ class TaskQueue(object):
 
     def delete(self, tid):
         url = '{}/s~{}/taskqueues/{}/tasks/{}'.format(
-            self.api_root, self.project, self.task_queue, tid)
+            API_ROOT, self.project, self.task_queue, tid)
 
         log.debug('deleting task %s', tid)
         resp = requests.delete(url, headers=self.headers())
