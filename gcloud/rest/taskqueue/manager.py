@@ -30,22 +30,25 @@ class TaskManager(object):
     # pylint: disable=too-many-instance-attributes
     def __init__(self, project, taskqueue, task_worker, batch_size=1,
                  burn=False, deadletter_insert_function=None,
-                 google_api_lock=None, lease_seconds=60, service_file=None):
+                 google_api_lock=None, lease_seconds=60, retry_limit=None,
+                 service_file=None):
         # pylint: disable=too-many-arguments
         self.project = project
         self.taskqueue = taskqueue
         self.task_worker = task_worker
-        self.google_api_lock = google_api_lock or threading.RLock()
+
         self.batch_size = batch_size
         self.burn = burn
+        self.deadletter_insert_function = deadletter_insert_function
+        self.google_api_lock = google_api_lock or threading.RLock()
+        self.lease_seconds = lease_seconds
+        self.retry_limit = retry_limit
 
         with self.google_api_lock:
             # TODO: move this functionality into TaskQueue (lease and patch)
             self.tasks_api = self.init_tasks_api(service_file=service_file)
 
-        self.deadletter_insert_function = deadletter_insert_function
         self.stop_event = threading.Event()
-        self.lease_seconds = lease_seconds
 
         self.tq = TaskQueue(project, taskqueue, creds=service_file)
 
@@ -126,6 +129,12 @@ class TaskManager(object):
                 elif isinstance(result, Exception):
                     log.error('failed to process task: %s', str(payloads[i]))
                     log.exception(result)
+
+                    if self.retry_limit is not None and \
+                            tasks[i]['retry_count'] >= self.retry_limit:
+                        log.warning('exceeded retry_limit, failing task')
+                        self.fail_task(payloads[i], result)
+                        self.delete_task(tasks[i])
                 else:
                     self.delete_task(tasks[i])
 
