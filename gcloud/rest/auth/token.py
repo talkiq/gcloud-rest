@@ -2,6 +2,7 @@ import datetime
 import json
 import logging
 import os
+import threading
 import time
 try:
     # python3
@@ -21,10 +22,12 @@ log = logging.getLogger(__name__)
 
 
 class Token(object):
-    def __init__(self, creds=None, scopes=None, timeout=TIMEOUT):
+    def __init__(self, creds=None, google_api_lock=None, scopes=None,
+                 timeout=TIMEOUT):
         self.creds = creds or os.getenv('GOOGLE_APPLICATION_CREDENTIALS')
         if not self.creds:
             raise Exception('could not load service credentials')
+        self.google_api_lock = google_api_lock or threading.RLock()
         self.scopes = scopes or []
         self.timeout = timeout
 
@@ -64,10 +67,11 @@ class Token(object):
             ('assertion', self.assertion())
         )
 
-        response = requests.post(TOKEN_URI, data=body, headers=headers,
-                                 timeout=self.timeout)
-        content = response.json()
+        with self.google_api_lock:
+            response = requests.post(TOKEN_URI, data=body, headers=headers,
+                                     timeout=self.timeout)
 
+        content = response.json()
         if 'error' in content:
             raise Exception('{}'.format(content))
 
