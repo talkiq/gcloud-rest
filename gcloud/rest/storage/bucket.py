@@ -1,4 +1,5 @@
 import logging
+import threading
 
 import requests
 
@@ -16,11 +17,15 @@ SCOPES = [
 
 
 class Bucket(object):
-    def __init__(self, project, bucket, creds=None):
+    def __init__(self, project, bucket, creds=None, google_api_lock=None):
         self.project = project
         self.bucket = bucket
 
-        self.access_token = Token(creds=creds, scopes=SCOPES)
+        self.google_api_lock = google_api_lock or threading.RLock()
+
+        self.access_token = Token(creds=creds,
+                                  google_api_lock=self.google_api_lock,
+                                  scopes=SCOPES)
 
     def headers(self):
         return {
@@ -32,7 +37,9 @@ class Bucket(object):
         object_name = object_name.replace('/', '%2F')
         url = '{}/{}/o/{}'.format(API_ROOT, self.bucket, object_name)
 
-        resp = requests.get(url, headers=self.headers(), params=params or {})
+        with self.google_api_lock:
+            resp = requests.get(url, headers=self.headers(), params=params or {})
+
         resp.raise_for_status()
         return resp.text
 
