@@ -1,4 +1,5 @@
 import logging
+import threading
 
 import requests
 
@@ -17,11 +18,15 @@ SCOPES = [
 
 
 class TaskQueue(object):
-    def __init__(self, project, task_queue, creds=None):
+    def __init__(self, project, task_queue, creds=None, google_api_lock=None):
         self.project = project
         self.task_queue = task_queue
 
-        self.access_token = Token(creds=creds, scopes=SCOPES)
+        self.google_api_lock = google_api_lock or threading.RLock()
+
+        self.access_token = Token(creds=creds,
+                                  google_api_lock=self.google_api_lock,
+                                  scopes=SCOPES)
 
         self.default_header = {
             'Accept': 'application/json',
@@ -41,5 +46,7 @@ class TaskQueue(object):
             API_ROOT, self.project, self.task_queue, tid)
 
         log.debug('deleting task %s', tid)
-        resp = requests.delete(url, headers=self.headers())
+        with self.google_api_lock:
+            resp = requests.delete(url, headers=self.headers())
+
         resp.raise_for_status()
