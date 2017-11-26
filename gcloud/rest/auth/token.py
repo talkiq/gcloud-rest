@@ -1,11 +1,20 @@
 import datetime
+import json
 import logging
 import os
+import time
+try:
+    # python3
+    from urllib.parse import urlencode
+except ImportError:
+    # python2.7
+    from urllib import urlencode
 
+import jwt
 import requests
-from oauth2client.service_account import ServiceAccountCredentials
 
 
+TOKEN_URI = 'https://accounts.google.com/o/oauth2/token'
 TIMEOUT = 60
 
 log = logging.getLogger(__name__)
@@ -27,23 +36,35 @@ class Token(object):
         self.ensure()
         return str(self.value)
 
+    def assertion(self):
+        with open(self.creds, 'r') as f:
+            credentials = json.loads(f.read())
+
+        # N.B. the below exists to avoid using this private method:
+        #   return ServiceAccountCredentials._generate_assertion()
+        now = int(time.time())
+        payload = {
+            'aud': TOKEN_URI,
+            'exp': now + 3600,
+            'iat': now,
+            'iss': credentials['client_email'],
+            'scope': ' '.join(self.scopes),
+        }
+
+        return jwt.encode(payload, credentials['private_key'],
+                          algorithm='RS256')
+
     def acquire(self):
         """
         acquires a new token
         """
-        credentials = ServiceAccountCredentials.from_json_keyfile_name(
-            self.creds, self.scopes)
-
-        url = credentials.token_uri
         headers = {'Content-Type': 'application/x-www-form-urlencoded'}
+        body = urlencode(
+            ('grant_type', 'urn:ietf:params:oauth:grant-type:jwt-bearer'),
+            ('assertion', self.assertion())
+        )
 
-        m = b'grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion='  # pylint: disable=line-too-long
-        # TODO: do not rely on private method -- extract out the relevant chunk
-        # for ourselves
-        assertion = credentials._generate_assertion()  # pylint: disable=protected-access
-        body = m + assertion
-
-        response = requests.post(url, data=body, headers=headers,
+        response = requests.post(TOKEN_URI, data=body, headers=headers,
                                  timeout=self.timeout)
         content = response.json()
 
