@@ -10,6 +10,7 @@ import httplib2
 from googleapiclient.discovery import build
 from oauth2client.service_account import ServiceAccountCredentials
 
+from gcloud.rest.core import backoff
 from gcloud.rest.taskqueue.error import FailFastError
 from gcloud.rest.taskqueue.queue import TaskQueue
 from gcloud.rest.taskqueue.utils import clean_b64decode
@@ -28,7 +29,8 @@ SCOPES = [
 
 class TaskManager(object):
     # pylint: disable=too-many-instance-attributes
-    def __init__(self, project, taskqueue, task_worker, batch_size=1,
+    def __init__(self, project, taskqueue, task_worker, backoff_base=2,
+                 backoff_factor=1.1, backoff_max_value=60, batch_size=1,
                  burn=False, deadletter_insert_function=None,
                  google_api_lock=None, lease_seconds=60, retry_limit=None,
                  service_file=None):
@@ -37,6 +39,8 @@ class TaskManager(object):
         self.taskqueue = taskqueue
         self.task_worker = task_worker
 
+        self.backoff = backoff(base=backoff_base, factor=backoff_factor,
+                               max_value=backoff_max_value)
         self.batch_size = batch_size
         self.burn = burn
         self.deadletter_insert_function = deadletter_insert_function
@@ -67,6 +71,12 @@ class TaskManager(object):
     def find_tasks_forever(self):
         while not self.stop_event.is_set():
             self.find_and_process_work()
+            try:
+                self.backoff.send('reset')
+            except TypeError:
+                # a TypeError is thrown when attempting to `send()` to a newly-
+                # created generator
+                pass
 
     def find_and_process_work(self):
         """
@@ -87,8 +97,7 @@ class TaskManager(object):
 
             tasks = task_lease.get('items')
             if not tasks:
-                # TODO: backoff
-                time.sleep(5)
+                time.sleep(next(self.backoff))
                 return
 
             log.info('grabbed %d tasks', len(tasks))
