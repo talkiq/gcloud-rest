@@ -137,6 +137,9 @@ class TaskManager(object):
             raise
 
     def fail_task(self, payload, exception):
+        if not self.deadletter_insert_function:
+            return
+
         properties = {
             'bucket': payload.get('bucket'),
             'error': str(exception),
