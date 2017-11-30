@@ -55,7 +55,7 @@ class TaskManager(object):
         self.stop_event = threading.Event()
 
         self.tq = TaskQueue(project, taskqueue, creds=service_file,
-                            google_api_lock=google_api_lock)
+                            google_api_lock=self.google_api_lock)
 
     @staticmethod
     def init_tasks_api(service_file=None):
