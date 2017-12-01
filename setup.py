@@ -13,7 +13,7 @@ with open(os.path.join(PACKAGE_ROOT, 'requirements.txt')) as f:
 
 setuptools.setup(
     name='gcloud-rest',
-    version='0.5.2',
+    version='0.6.0',
     description='RESTful Python Client for Google Cloud',
     long_description=README,
     namespace_packages=[
@@ -24,7 +24,7 @@ setuptools.setup(
     install_requires=REQUIREMENTS,
     author='TalkIQ',
     author_email='engineering@talkiq.com',
-    url='https://github.com/talkiq/gcloud-aio',
+    url='https://github.com/talkiq/gcloud-rest',
     platforms='Posix; MacOS X; Windows',
     include_package_data=True,
     zip_safe=False,
