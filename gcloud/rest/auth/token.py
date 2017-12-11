@@ -62,10 +62,10 @@ class Token(object):
         acquires a new token
         """
         headers = {'Content-Type': 'application/x-www-form-urlencoded'}
-        body = urlencode(
+        body = urlencode((
             ('grant_type', 'urn:ietf:params:oauth:grant-type:jwt-bearer'),
-            ('assertion', self.assertion())
-        )
+            ('assertion', self.assertion()),
+        ))
 
         with self.google_api_lock:
             response = requests.post(TOKEN_URI, data=body, headers=headers,
