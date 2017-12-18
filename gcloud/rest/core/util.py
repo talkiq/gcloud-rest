@@ -14,10 +14,13 @@ def backoff(base=2, factor=1.1, max_value=None):
         if no_items_in_queue:
             time.sleep(next(my_backoff))
         else:
+            my_backoff.send(None)
             my_backoff.send('reset')
 
     If its more convenient, you can re-initialize the generator rather than
-    sending the `reset` event.
+    sending the `reset` event. Note that `None` is sent first to ensure the
+    generator has begun iteration. Otherwise, sending the `reset` event may
+    throw a TypeError.
 
     Params:
 
