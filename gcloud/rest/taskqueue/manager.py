@@ -72,12 +72,8 @@ class TaskManager(object):
     def find_tasks_forever(self):
         while not self.stop_event.is_set():
             self.find_and_process_work()
-            try:
-                self.backoff.send('reset')
-            except TypeError:
-                # a TypeError is thrown when attempting to `send()` to a newly-
-                # created generator
-                pass
+            self.backoff.send(None)
+            self.backoff.send('reset')
 
     def find_and_process_work(self):
         """
