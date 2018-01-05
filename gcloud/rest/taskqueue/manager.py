@@ -106,19 +106,22 @@ class TaskManager(object):
 
                     self.fail_task(payloads[i], result)
                     threading.Thread(target=self.tq.cancel,
-                                     args=(task,)).start()
+                                     args=(tasks[i],)).start()
                 elif isinstance(result, Exception):
                     log.error('failed to process task: %s', str(payloads[i]))
                     log.exception(result)
 
-                    if self.retry_limit is not None and \
-                            tasks[i]['status']['attemptDispatchCount'] >= self.retry_limit:
-                        log.warning('exceeded retry_limit, failing task')
-                        self.fail_task(payloads[i], result)
-                        threading.Thread(target=self.tq.delete,
-                                         args=(task.get('name'),)).start()
+                    retries = tasks[i]['status']['attemptDispatchCount']
+                    if self.retry_limit is None or retries < self.retry_limit:
+                        continue
+
+                    log.warning('exceeded retry_limit, failing task')
+                    self.fail_task(payloads[i], result)
+                    threading.Thread(target=self.tq.delete,
+                                     args=(tasks[i].get('name'),)).start()
                 else:
-                    threading.Thread(target=self.tq.ack, args=(task,)).start()
+                    threading.Thread(target=self.tq.ack,
+                                     args=(tasks[i],)).start()
 
             for e in end_lease_events:
                 e.set()
