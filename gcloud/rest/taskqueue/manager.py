@@ -98,30 +98,8 @@ class TaskManager(object):
 
             results = self.task_worker(payloads)
 
-            for i, result in enumerate(results):
-                if isinstance(result, FailFastError):
-                    log.error('[FailFastError] failed to process task: %s',
-                              str(payloads[i]))
-                    log.exception(result)
-
-                    self.fail_task(payloads[i], result)
-                    threading.Thread(target=self.tq.cancel,
-                                     args=(tasks[i],)).start()
-                elif isinstance(result, Exception):
-                    log.error('failed to process task: %s', str(payloads[i]))
-                    log.exception(result)
-
-                    retries = tasks[i]['status']['attemptDispatchCount']
-                    if self.retry_limit is None or retries < self.retry_limit:
-                        continue
-
-                    log.warning('exceeded retry_limit, failing task')
-                    self.fail_task(payloads[i], result)
-                    threading.Thread(target=self.tq.delete,
-                                     args=(tasks[i].get('name'),)).start()
-                else:
-                    threading.Thread(target=self.tq.ack,
-                                     args=(tasks[i],)).start()
+            for task, payload, result in zip(tasks, payloads, results):
+                self.check_task_result(task, payload, result)
 
             for e in end_lease_events:
                 e.set()
@@ -129,6 +107,32 @@ class TaskManager(object):
             log.exception(e)
             self.stop_event.set()
             raise
+
+    def check_task_result(self, task, payload, result):
+        if isinstance(result, FailFastError):
+            log.error('[FailFastError] failed to process task: %s', payload)
+            log.exception(result)
+
+            self.fail_task(payload, result)
+            threading.Thread(target=self.tq.cancel, args=(task,)).start()
+            return
+
+        if isinstance(result, Exception):
+            log.error('failed to process task: %s', payload)
+            log.exception(result)
+
+            retries = task['status']['attemptDispatchCount']
+            if self.retry_limit is None or retries < self.retry_limit:
+                threading.Thread(target=self.tq.cancel, args=(task,)).start()
+                return
+
+            log.warning('exceeded retry_limit, failing task')
+            self.fail_task(payload, result)
+            threading.Thread(target=self.tq.delete,
+                             args=(task.get('name'),)).start()
+            return
+
+        threading.Thread(target=self.tq.ack, args=(task,)).start()
 
     def fail_task(self, payload, exception):
         if not self.deadletter_insert_function:
