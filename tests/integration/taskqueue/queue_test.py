@@ -42,13 +42,22 @@ def test_lifecycle():
     leased = leased['tasks'][0]
     print(leased)
 
-    assert leased['pullMessage']['payload'] == payload
-    assert inserted == leased
+    for k, v in leased.items():
+        if k == 'scheduleTime':
+            assert inserted[k] != v
+        elif k == 'status':
+            assert not inserted.get(k)
+            assert v['attemptDispatchCount'] == 1
+        else:
+            assert inserted[k] == v
 
     renewed = tq.renew(leased)
     print(renewed)
-
-    assert renewed == leased
+    for k, v in renewed.items():
+        if k == 'scheduleTime':
+            assert leased[k] != v
+        else:
+            assert leased[k] == v
 
     # ack?
     # cancel?
