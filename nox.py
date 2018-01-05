@@ -34,7 +34,7 @@ def integration_tests(session, python_version):
     session.interpreter = 'python{}'.format(python_version)
     session.virtualenv_dirname = 'integration-' + python_version
 
-    session.install('pytest', 'pytest-mock')
+    session.install('pytest', 'pytest-cov', 'pytest-mock')
     session.install('.')
 
     session.run(
