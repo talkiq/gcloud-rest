@@ -19,18 +19,23 @@ def test_lifecycle():
             tq.delete(task['name'])
 
     inserted = tq.insert(payload)
+    print(inserted)
     got = tq.get(inserted['name'], full=True)
+    print(got)
     assert inserted == got
 
     listed = tq.list(full=True)
+    print(listed)
     assert len(listed['tasks']) == 1
     assert inserted == listed['tasks'][0]
 
     leased = tq.lease()
+    print(leased)
     assert leased['pullMessage']['payload'] == payload
     assert inserted == leased
 
     renewed = tq.renew(leased)
+    print(renewed)
     assert renewed == leased
 
     # ack?

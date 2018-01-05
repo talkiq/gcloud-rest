@@ -97,6 +97,10 @@ class TaskQueue(object):
     def insert(self, payload, tag=None):
         url = '{}/tasks'.format(self.api_root)
 
+        try:
+            payload = payload.decode()
+        except AttributeError:
+            pass
         body = {
             'task': {
                 'pullMessage': {
