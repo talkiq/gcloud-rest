@@ -20,22 +20,32 @@ def test_lifecycle():
 
     inserted = tq.insert(payload)
     print(inserted)
+
     got = tq.get(inserted['name'], full=True)
     print(got)
+
     assert inserted == got
 
     listed = tq.list(full=True)
     print(listed)
+
     assert len(listed['tasks']) == 1
     assert inserted == listed['tasks'][0]
 
-    leased = tq.lease()
+    leased = tq.lease(num_tasks=1)
     print(leased)
+
+    assert len(leased['tasks']) == 1
+
+    leased = leased['tasks'][0]
+    print(leased)
+
     assert leased['pullMessage']['payload'] == payload
     assert inserted == leased
 
     renewed = tq.renew(leased)
     print(renewed)
+
     assert renewed == leased
 
     # ack?
