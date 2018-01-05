@@ -12,6 +12,12 @@ def test_lifecycle():
 
     tq = queue.TaskQueue(project, task_queue)
 
+    # drain old test tasks
+    drain = tq.lease(num_tasks=1000)
+    if drain:
+        for task in drain['tasks']:
+            tq.delete(task['name'])
+
     inserted = tq.insert(payload)
     got = tq.get(inserted['name'], full=True)
     assert inserted == got
