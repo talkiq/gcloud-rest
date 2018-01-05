@@ -65,11 +65,11 @@ class TaskManager(object):
         try:
             task_lease = self.tq.lease(num_tasks=self.batch_size,
                                        lease_duration=self.lease_seconds)
-            tasks = task_lease.get('tasks')
-            if not tasks:  # TODO: before .get('tasks') ?
+            if not task_lease:
                 time.sleep(next(self.backoff))
                 return
 
+            tasks = task_lease.get('tasks')
             log.info('grabbed %d tasks', len(tasks))
 
             if self.burn:
@@ -78,13 +78,14 @@ class TaskManager(object):
 
                 for task in to_burn:
                     log.info('burning task %s', task.get('name'))
-                    self.delete_task(task)
+                    threading.Thread(target=self.tq.delete,
+                                     args=(task.get('name'),)).start()
 
             end_lease_events = []
             payloads = []
             for task in tasks:
                 data = clean_b64decode(task['pullMessage']['payload'])
-                payload = json.loads(data)
+                payload = json.loads(data.decode())
                 end_lease_event = threading.Event()
 
                 threading.Thread(
@@ -104,7 +105,8 @@ class TaskManager(object):
                     log.exception(result)
 
                     self.fail_task(payloads[i], result)
-                    self.delete_task(tasks[i])
+                    threading.Thread(target=self.tq.cancel,
+                                     args=(task,)).start()
                 elif isinstance(result, Exception):
                     log.error('failed to process task: %s', str(payloads[i]))
                     log.exception(result)
@@ -113,9 +115,10 @@ class TaskManager(object):
                             tasks[i]['status']['attemptDispatchCount'] >= self.retry_limit:
                         log.warning('exceeded retry_limit, failing task')
                         self.fail_task(payloads[i], result)
-                        self.delete_task(tasks[i])
+                        threading.Thread(target=self.tq.delete,
+                                         args=(task.get('name'),)).start()
                 else:
-                    self.delete_task(tasks[i])
+                    threading.Thread(target=self.tq.ack, args=(task,)).start()
 
             for e in end_lease_events:
                 e.set()
@@ -159,12 +162,6 @@ class TaskManager(object):
                 break
 
             time.sleep(self.lease_seconds / 2)
-
-    def delete_task(self, task):
-        threading.Thread(
-            target=self.tq.delete,
-            args=(task.get('name'),)
-        ).start()
 
     def stop(self):
         self.stop_event.set()

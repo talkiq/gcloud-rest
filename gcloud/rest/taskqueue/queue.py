@@ -1,3 +1,4 @@
+import base64
 import logging
 import threading
 
@@ -80,6 +81,14 @@ class TaskQueue(object):
         resp.raise_for_status()
         return resp.json()
 
+    def drain(self):
+        tasks = self.lease(num_tasks=1000)
+        while tasks:
+            for task in tasks['tasks']:
+                self.delete(task['name'])
+
+            tasks = self.lease(num_tasks=1000)
+
     # https://cloud.google.com/cloud-tasks/docs/reference/rest/v2beta2/projects.locations.queues.tasks/get
     def get(self, tname, full=False):
         url = '{}/{}'.format(API_ROOT, tname)
@@ -97,14 +106,10 @@ class TaskQueue(object):
     def insert(self, payload, tag=None):
         url = '{}/tasks'.format(self.api_root)
 
-        try:
-            payload = payload.decode()
-        except AttributeError:
-            pass
         body = {
             'task': {
                 'pullMessage': {
-                    'payload': payload,
+                    'payload': base64.b64encode(payload).decode(),
                     'tag': tag,
                 },
             },

@@ -1,6 +1,5 @@
 from __future__ import print_function
 
-import base64
 import os
 
 import gcloud.rest.taskqueue.queue as queue
@@ -10,7 +9,7 @@ def test_lifecycle():
     project = os.environ['GCLOUD_PROJECT']
     task_queue = 'test-pull'
 
-    payload = base64.b64encode(b'do-the-lifecycle')
+    payload = b'do-the-lifecycle'
 
     tq = queue.TaskQueue(project, task_queue)
 
