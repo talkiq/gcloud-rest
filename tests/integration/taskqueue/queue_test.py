@@ -27,16 +27,18 @@ def test_lifecycle():
     listed = tq.list(full=True)
     print(listed)
 
-    assert len(listed['tasks']) == 1
-    assert inserted == listed['tasks'][0]
+    assert listed and listed['tasks']
+    assert inserted in listed['tasks']
 
-    leased = tq.lease(num_tasks=1)
-    print(leased)
+    leased = {'name': {'whyIsThisADict': 'subscriptableLinting'}}
+    while leased['name'] != inserted['name']:
+        leased_list = tq.lease(num_tasks=1)
+        print(leased_list)
 
-    assert len(leased['tasks']) == 1
+        assert len(leased_list['tasks']) == 1
 
-    leased = leased['tasks'][0]
-    print(leased)
+        leased = leased_list['tasks'][0]
+        print(leased)
 
     for k, v in leased.items():
         if k == 'scheduleTime':
