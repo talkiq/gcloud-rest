@@ -37,7 +37,16 @@ def integration_tests(session, python_version):
     session.install('pytest', 'pytest-mock')
     session.install('.')
 
-    session.run('py.test', '--quiet', 'tests/integration')
+    session.run(
+        'py.test',
+        '--quiet',
+        '--cov=gcloud.rest',
+        '--cov=tests.integration',
+        '--cov-append',
+        '--cov-report=',
+        '--cov-fail-under=0',
+        os.path.join('tests', 'integration'),
+        *session.posargs)
 
 
 @nox.session
