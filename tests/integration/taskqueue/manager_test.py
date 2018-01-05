@@ -1,11 +1,10 @@
 import json
 import os
-import unittest.mock
 
 import gcloud.rest.taskqueue.manager as manager
 
 
-def test_lifecycle():
+def test_lifecycle(mocker):
     project = os.environ['GCLOUD_PROJECT']
     task_queue = 'test-pull'
 
@@ -16,7 +15,7 @@ def test_lifecycle():
         {'test_idx': 4},
     ]
 
-    worker = unittest.mock.Mock()
+    worker = mocker.Mock()
     worker.return_value = ['ok' for _ in tasks]
 
     tm = manager.TaskManager(project, task_queue, worker,
@@ -30,4 +29,4 @@ def test_lifecycle():
         tm.tq.insert(json.dumps(task).encode())
 
     tm.find_and_process_work()
-    assert worker.mock_calls == [unittest.mock.call(tasks)]
+    assert worker.mock_calls == [mocker.call(tasks)]
