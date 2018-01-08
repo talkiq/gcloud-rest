@@ -19,8 +19,6 @@ Usage
 
 We'll get to this soon -- we promise!
 
-
-
 .. _CloudTasks API: https://cloud.google.com/cloud-tasks/docs/reference/rest/v2beta2/projects.locations.queues.tasks
 
 .. |pypi| image:: https://img.shields.io/pypi/v/gcloud-rest.svg?style=flat-square
