@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+import base64
 import os
 
 import gcloud.rest.taskqueue.queue as queue
@@ -16,7 +17,7 @@ def test_lifecycle():
     # drain old test tasks
     tq.drain()
 
-    inserted = tq.insert(payload)
+    inserted = tq.insert(base64.b64encode(payload).decode())
     print(inserted)
 
     got = tq.get(inserted['name'], full=True)

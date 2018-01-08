@@ -1,4 +1,3 @@
-import base64
 import logging
 import threading
 
@@ -109,7 +108,7 @@ class TaskQueue(object):
         body = {
             'task': {
                 'pullMessage': {
-                    'payload': base64.b64encode(payload).decode(),
+                    'payload': payload,
                     'tag': tag,
                 },
             },

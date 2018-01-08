@@ -1,3 +1,4 @@
+import base64
 import json
 import os
 
@@ -26,7 +27,7 @@ def test_lifecycle(mocker):
 
     # insert new ones
     for task in tasks:
-        tm.tq.insert(json.dumps(task).encode())
+        tm.tq.insert(base64.b64encode(json.dumps(task).encode()).decode())
 
     tm.find_and_process_work()
     assert worker.mock_calls == [mocker.call(tasks)]
