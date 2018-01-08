@@ -5,10 +5,8 @@ import os
 import threading
 import time
 try:
-    # python3
     from urllib.parse import urlencode
 except ImportError:
-    # python2.7
     from urllib import urlencode
 
 import jwt

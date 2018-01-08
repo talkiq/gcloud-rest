@@ -1,14 +1,9 @@
 import datetime
 import json
 import logging
-import os
 import threading
 import time
 import traceback
-
-import httplib2
-from googleapiclient.discovery import build
-from oauth2client.service_account import ServiceAccountCredentials
 
 from gcloud.rest.core import backoff
 from gcloud.rest.taskqueue.error import FailFastError
@@ -44,30 +39,14 @@ class TaskManager(object):
         self.batch_size = batch_size
         self.burn = burn
         self.deadletter_insert_function = deadletter_insert_function
-        self.google_api_lock = google_api_lock or threading.RLock()
         self.lease_seconds = lease_seconds
         self.retry_limit = retry_limit
 
-        with self.google_api_lock:
-            # TODO: move this functionality into TaskQueue (lease and patch)
-            self.tasks_api = self.init_tasks_api(service_file=service_file)
-
         self.stop_event = threading.Event()
 
+        self.google_api_lock = google_api_lock or threading.RLock()
         self.tq = TaskQueue(project, taskqueue, creds=service_file,
                             google_api_lock=self.google_api_lock)
-
-    @staticmethod
-    def init_tasks_api(service_file=None):
-        creds = service_file or os.getenv('GOOGLE_APPLICATION_CREDENTIALS')
-        if not creds:
-            raise Exception('could not load service credentials')
-
-        credentials = ServiceAccountCredentials.from_json_keyfile_name(
-            creds, scopes=SCOPES)
-        credentials_http = credentials.authorize(httplib2.Http(timeout=30))
-        service = build('taskqueue', 'v1beta2', http=credentials_http)
-        return service.tasks()
 
     def find_tasks_forever(self):
         while not self.stop_event.is_set():
@@ -84,19 +63,13 @@ class TaskManager(object):
         http://stackoverflow.com/a/17071255
         """
         try:
-            with self.google_api_lock:
-                task_lease = self.tasks_api.lease(
-                    project=self.project,
-                    taskqueue=self.taskqueue,
-                    numTasks=self.batch_size,
-                    leaseSecs=self.lease_seconds
-                ).execute()
-
-            tasks = task_lease.get('items')
-            if not tasks:
+            task_lease = self.tq.lease(num_tasks=self.batch_size,
+                                       lease_duration=self.lease_seconds)
+            if not task_lease:
                 time.sleep(next(self.backoff))
                 return
 
+            tasks = task_lease.get('tasks')
             log.info('grabbed %d tasks', len(tasks))
 
             if self.burn:
@@ -104,14 +77,15 @@ class TaskManager(object):
                 tasks = [tasks[0]]
 
                 for task in to_burn:
-                    log.info('burning task %s', task.get('id'))
-                    self.delete_task(task)
+                    log.info('burning task %s', task.get('name'))
+                    threading.Thread(target=self.tq.delete,
+                                     args=(task.get('name'),)).start()
 
             end_lease_events = []
             payloads = []
             for task in tasks:
-                data = clean_b64decode(task['payloadBase64'])
-                payload = json.loads(data)
+                data = clean_b64decode(task['pullMessage']['payload'])
+                payload = json.loads(data.decode())
                 end_lease_event = threading.Event()
 
                 threading.Thread(
@@ -124,25 +98,8 @@ class TaskManager(object):
 
             results = self.task_worker(payloads)
 
-            for i, result in enumerate(results):
-                if isinstance(result, FailFastError):
-                    log.error('[FailFastError] failed to process task: %s',
-                              str(payloads[i]))
-                    log.exception(result)
-
-                    self.fail_task(payloads[i], result)
-                    self.delete_task(tasks[i])
-                elif isinstance(result, Exception):
-                    log.error('failed to process task: %s', str(payloads[i]))
-                    log.exception(result)
-
-                    if self.retry_limit is not None and \
-                            tasks[i]['retry_count'] >= self.retry_limit:
-                        log.warning('exceeded retry_limit, failing task')
-                        self.fail_task(payloads[i], result)
-                        self.delete_task(tasks[i])
-                else:
-                    self.delete_task(tasks[i])
+            for task, payload, result in zip(tasks, payloads, results):
+                self.check_task_result(task, payload, result)
 
             for e in end_lease_events:
                 e.set()
@@ -150,6 +107,32 @@ class TaskManager(object):
             log.exception(e)
             self.stop_event.set()
             raise
+
+    def check_task_result(self, task, payload, result):
+        if isinstance(result, FailFastError):
+            log.error('[FailFastError] failed to process task: %s', payload)
+            log.exception(result)
+
+            self.fail_task(payload, result)
+            threading.Thread(target=self.tq.cancel, args=(task,)).start()
+            return
+
+        if isinstance(result, Exception):
+            log.error('failed to process task: %s', payload)
+            log.exception(result)
+
+            retries = task['status']['attemptDispatchCount']
+            if self.retry_limit is None or retries < self.retry_limit:
+                threading.Thread(target=self.tq.cancel, args=(task,)).start()
+                return
+
+            log.warning('exceeded retry_limit, failing task')
+            self.fail_task(payload, result)
+            threading.Thread(target=self.tq.delete,
+                             args=(task.get('name'),)).start()
+            return
+
+        threading.Thread(target=self.tq.ack, args=(task,)).start()
 
     def fail_task(self, payload, exception):
         if not self.deadletter_insert_function:
@@ -176,23 +159,9 @@ class TaskManager(object):
         time.sleep(self.lease_seconds / 2)
 
         while not lease_event.is_set() and not self.stop_event.is_set():
-            patch_body = {
-                'kind': 'taskqueues#task',
-                'id': task['id'],
-                'queueName': self.taskqueue
-            }
-
             try:
-                log.info('extending lease for %s', task['id'])
-
-                with self.google_api_lock:
-                    self.tasks_api.patch(
-                        project=self.project,
-                        taskqueue=self.taskqueue,
-                        task=task['id'],
-                        body=patch_body,
-                        newLeaseSeconds=self.lease_seconds
-                    ).execute()
+                log.info('extending lease for %s', task['name'])
+                self.tq.renew(task, lease_duration=self.lease_seconds)
             except Exception as e:  # pylint: disable=broad-except
                 log.exception(e)
                 # stop lease extension thread but not main thread
@@ -200,12 +169,6 @@ class TaskManager(object):
                 break
 
             time.sleep(self.lease_seconds / 2)
-
-    def delete_task(self, task):
-        threading.Thread(
-            target=self.tq.delete,
-            args=(task.get('id'),)
-        ).start()
 
     def stop(self):
         self.stop_event.set()
