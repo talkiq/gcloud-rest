@@ -2,7 +2,7 @@ RESTful Google Cloud Client Library for Python
 ==============================================
 
 This project is a collection of Google Cloud client libraries for the REST-only
-APIs; its *raison d'etre* is to implement a simple `TaskQueue API`_ as well as
+APIs; its *raison d'etre* is to implement a simple `CloudTasks API`_ as well as
 a more abstract TaskManager.
 
 |pypi| |circleci| |coverage| |pythons|
@@ -19,7 +19,9 @@ Usage
 
 We'll get to this soon -- we promise!
 
-.. _TaskQueue API: https://cloud.google.com/appengine/docs/standard/python/taskqueue/rest/
+
+
+.. _CloudTasks API: https://cloud.google.com/cloud-tasks/docs/reference/rest/v2beta2/projects.locations.queues.tasks
 
 .. |pypi| image:: https://img.shields.io/pypi/v/gcloud-rest.svg?style=flat-square
     :alt: Latest PyPI Version
