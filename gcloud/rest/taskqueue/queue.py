@@ -143,7 +143,6 @@ class TaskQueue(object):
             'responseView': 'FULL',
         }
         if task_filter:
-            # TODO: this doesn't seem to work?
             body['filter'] = task_filter
 
         with self.google_api_lock:

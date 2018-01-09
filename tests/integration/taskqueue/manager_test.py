@@ -26,7 +26,8 @@ def test_lifecycle(mocker):
 
     # insert new ones
     for task in tasks:
-        tm.tq.insert(encode(json.dumps(task)))
+        tm.tq.insert(encode(json.dumps(task)),
+                     tag=encode('gcloud-rest-manager-test'))
 
     tm.find_and_process_work()
     assert worker.mock_calls == [mocker.call(tasks)]

@@ -17,7 +17,7 @@ def test_lifecycle():
     # drain old test tasks
     tq.drain()
 
-    inserted = tq.insert(encode(payload))
+    inserted = tq.insert(encode(payload), tag=encode('gcloud-rest-queue-test'))
     print(inserted)
 
     got = tq.get(inserted['name'], full=True)
