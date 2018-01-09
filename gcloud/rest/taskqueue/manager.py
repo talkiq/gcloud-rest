@@ -16,17 +16,17 @@ log = logging.getLogger(__name__)
 
 class TaskManager(object):
     # pylint: disable=too-many-instance-attributes
-    def __init__(self, project, taskqueue, task_worker, backoff_base=2,
+    def __init__(self, project, taskqueue, worker, backoff_base=2,
                  backoff_factor=1.1, backoff_max_value=60, batch_size=1,
                  burn=False, deadletter_insert_function=None,
                  google_api_lock=None, lease_seconds=60, retry_limit=None,
                  service_file=None):
         # pylint: disable=too-many-arguments
-        self.task_worker = task_worker
+        self.worker = worker
 
         self.backoff = backoff(base=backoff_base, factor=backoff_factor,
                                max_value=backoff_max_value)
-        self.batch_size = batch_size
+        self.batch_size = max(batch_size, 1)
         self.burn = burn
         self.deadletter_insert_function = deadletter_insert_function
         self.lease_seconds = lease_seconds
@@ -86,7 +86,7 @@ class TaskManager(object):
                 payloads.append(payload)
                 end_lease_events.append(end_lease_event)
 
-            results = self.task_worker(payloads)
+            results = self.worker(payloads)
 
             for task, payload, result in zip(tasks, payloads, results):
                 self.check_task_result(task, payload, result)
