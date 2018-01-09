@@ -15,6 +15,18 @@ SCOPES = [
 ]
 
 
+def raise_for_status(resp):
+    try:
+        resp.raise_for_status()
+    except requests.exceptions.HTTPError as e:
+        try:
+            log.error(e.response.json())
+        except Exception:  # pylint: disable=broad-except
+            log.error(e.response.text)
+
+        raise
+
+
 class TaskQueue(object):
     def __init__(self, project, task_queue, creds=None, google_api_lock=None,
                  location=LOCATION):
@@ -52,7 +64,7 @@ class TaskQueue(object):
         with self.google_api_lock:
             resp = requests.post(url, headers=self.headers(), json=body)
 
-        resp.raise_for_status()
+        raise_for_status(resp)
         return resp.json()
 
     # https://cloud.google.com/cloud-tasks/docs/reference/rest/v2beta2/projects.locations.queues.tasks/cancelLease
@@ -67,7 +79,7 @@ class TaskQueue(object):
         with self.google_api_lock:
             resp = requests.post(url, headers=self.headers(), json=body)
 
-        resp.raise_for_status()
+        raise_for_status(resp)
         return resp.json()
 
     # https://cloud.google.com/cloud-tasks/docs/reference/rest/v2beta2/projects.locations.queues.tasks/delete
@@ -77,7 +89,7 @@ class TaskQueue(object):
         with self.google_api_lock:
             resp = requests.delete(url, headers=self.headers())
 
-        resp.raise_for_status()
+        raise_for_status(resp)
         return resp.json()
 
     def drain(self):
@@ -98,7 +110,7 @@ class TaskQueue(object):
         with self.google_api_lock:
             resp = requests.get(url, headers=self.headers(), params=params)
 
-        resp.raise_for_status()
+        raise_for_status(resp)
         return resp.json()
 
     # https://cloud.google.com/cloud-tasks/docs/reference/rest/v2beta2/projects.locations.queues.tasks/create
@@ -118,7 +130,7 @@ class TaskQueue(object):
         with self.google_api_lock:
             resp = requests.post(url, headers=self.headers(), json=body)
 
-        resp.raise_for_status()
+        raise_for_status(resp)
         return resp.json()
 
     # https://cloud.google.com/cloud-tasks/docs/reference/rest/v2beta2/projects.locations.queues.tasks/lease
@@ -137,7 +149,7 @@ class TaskQueue(object):
         with self.google_api_lock:
             resp = requests.post(url, headers=self.headers(), json=body)
 
-        resp.raise_for_status()
+        raise_for_status(resp)
         return resp.json()
 
     # https://cloud.google.com/cloud-tasks/docs/reference/rest/v2beta2/projects.locations.queues.tasks/list
@@ -152,7 +164,7 @@ class TaskQueue(object):
         with self.google_api_lock:
             resp = requests.get(url, headers=self.headers(), params=params)
 
-        resp.raise_for_status()
+        raise_for_status(resp)
         return resp.json()
 
     # https://cloud.google.com/cloud-tasks/docs/reference/rest/v2beta2/projects.locations.queues.tasks/renewLease
@@ -168,5 +180,5 @@ class TaskQueue(object):
         with self.google_api_lock:
             resp = requests.post(url, headers=self.headers(), json=body)
 
-        resp.raise_for_status()
+        raise_for_status(resp)
         return resp.json()
