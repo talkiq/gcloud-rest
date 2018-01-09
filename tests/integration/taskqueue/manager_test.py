@@ -1,8 +1,8 @@
-import base64
 import json
 import os
 
-import gcloud.rest.taskqueue.manager as manager
+from gcloud.rest.taskqueue import encode
+from gcloud.rest.taskqueue import TaskManager
 
 
 def test_lifecycle(mocker):
@@ -19,15 +19,14 @@ def test_lifecycle(mocker):
     worker = mocker.Mock()
     worker.return_value = ['ok' for _ in tasks]
 
-    tm = manager.TaskManager(project, task_queue, worker,
-                             batch_size=len(tasks))
+    tm = TaskManager(project, task_queue, worker, batch_size=len(tasks))
 
     # drain old test tasks
     drain = tm.tq.drain()
 
     # insert new ones
     for task in tasks:
-        tm.tq.insert(base64.b64encode(json.dumps(task).encode()).decode())
+        tm.tq.insert(encode(json.dumps(task)))
 
     tm.find_and_process_work()
     assert worker.mock_calls == [mocker.call(tasks)]

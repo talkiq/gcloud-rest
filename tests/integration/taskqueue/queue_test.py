@@ -1,23 +1,23 @@
 from __future__ import print_function
 
-import base64
 import os
 
-import gcloud.rest.taskqueue.queue as queue
+from gcloud.rest.taskqueue import encode
+from gcloud.rest.taskqueue import TaskQueue
 
 
 def test_lifecycle():
     project = os.environ['GCLOUD_PROJECT']
     task_queue = 'test-pull'
 
-    payload = b'do-the-lifecycle'
+    payload = 'do-the-lifecycle'
 
-    tq = queue.TaskQueue(project, task_queue)
+    tq = TaskQueue(project, task_queue)
 
     # drain old test tasks
     tq.drain()
 
-    inserted = tq.insert(base64.b64encode(payload).decode())
+    inserted = tq.insert(encode(payload))
     print(inserted)
 
     got = tq.get(inserted['name'], full=True)
