@@ -35,6 +35,7 @@ class TaskManager(object):
         self.retry_limit = retry_limit
 
         self.stop_event = threading.Event()
+        self.tasks = dict()
 
         self.google_api_lock = google_api_lock or threading.RLock()
         self.tq = TaskQueue(project, taskqueue, creds=service_file,
@@ -54,7 +55,6 @@ class TaskManager(object):
                 self.backoff.send(None)
                 self.backoff.send('reset')
 
-
     def find_and_process_work(self):
         """
         Query the Pull Task Queue REST API for work every N seconds. If work
@@ -63,6 +63,7 @@ class TaskManager(object):
 
         http://stackoverflow.com/a/17071255
         """
+        # pylint: disable=too-many-locals
         try:
             task_lease = self.tq.lease(num_tasks=self.batch_size,
                                        lease_duration=self.lease_seconds)
@@ -85,30 +86,33 @@ class TaskManager(object):
                 threading.Thread(target=self.tq.delete,
                                  args=(task.get('name'),)).start()
 
-        end_lease_events = []
+        leasers = []
         payloads = []
         for task in tasks:
-            data = decode(task['pullMessage']['payload']).decode()
-            payload = json.loads(data)
-            end_lease_event = threading.Event()
+            self.tasks[task['name']] = task
+            payloads.append(
+                json.loads(decode(task['pullMessage']['payload']).decode()))
 
-            threading.Thread(
-                target=self.lease_manager,
-                args=(end_lease_event, task)
-            ).start()
-
-            payloads.append(payload)
-            end_lease_events.append(end_lease_event)
+            end_lease = threading.Event()
+            lease_manager = threading.Thread(target=self.lease_manager,
+                                             args=(end_lease, task['name']))
+            lease_manager.start()
+            leasers.append((end_lease, lease_manager))
 
         results = self.worker(payloads)
 
-        for task, payload, result in zip(tasks, payloads, results):
-            self.check_task_result(task, payload, result)
-
-        for e in end_lease_events:
+        for (e, _) in leasers:
             e.set()
+        for (_, lm) in leasers:
+            lm.join()
 
-    def check_task_result(self, task, payload, result):
+        for task, payload, result in zip(tasks, payloads, results):
+            self.check_task_result(task['name'], payload, result)
+
+    def check_task_result(self, tname, payload, result):
+        task = self.tasks[tname]
+        del self.tasks[tname]
+
         if isinstance(result, FailFastError):
             log.error('[FailFastError] failed to process task: %s', payload)
             log.exception(result)
@@ -129,7 +133,7 @@ class TaskManager(object):
             log.warning('exceeded retry_limit, failing task')
             self.fail_task(payload, result)
             threading.Thread(target=self.tq.delete,
-                             args=(task.get('name'),)).start()
+                             args=(task['name'],)).start()
             return
 
         threading.Thread(target=self.tq.ack, args=(task,)).start()
@@ -150,25 +154,24 @@ class TaskManager(object):
 
         self.deadletter_insert_function(payload.get('name'), properties)
 
-    def lease_manager(self, lease_event, task):
+    def lease_manager(self, lease_event, tname):
         """
         This function extends the Pull Task Queue lease to make sure no other
         workers pick up the same task. This is force-killed after the task
         work is complete
         """
-        time.sleep(self.lease_seconds / 2)
-
         while not lease_event.is_set() and not self.stop_event.is_set():
+            time.sleep(self.lease_seconds / 2)
+
             try:
-                log.info('extending lease for %s', task['name'])
-                self.tq.renew(task, lease_duration=self.lease_seconds)
+                log.info('extending lease for %s', tname)
+                renewed = self.tq.renew(self.tasks[tname],
+                                        lease_duration=self.lease_seconds)
+                self.tasks[tname] = renewed
             except Exception as e:  # pylint: disable=broad-except
                 log.exception(e)
                 # stop lease extension thread but not main thread
                 lease_event.set()
-                break
-
-            time.sleep(self.lease_seconds / 2)
 
     def stop(self):
         self.stop_event.set()
