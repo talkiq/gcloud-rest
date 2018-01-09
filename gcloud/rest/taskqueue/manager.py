@@ -5,6 +5,8 @@ import threading
 import time
 import traceback
 
+import requests
+
 from gcloud.rest.core import backoff
 from gcloud.rest.taskqueue.error import FailFastError
 from gcloud.rest.taskqueue.queue import TaskQueue
@@ -55,6 +57,7 @@ class TaskManager(object):
         try:
             task_lease = self.tq.lease(num_tasks=self.batch_size,
                                        lease_duration=self.lease_seconds)
+
             if not task_lease:
                 time.sleep(next(self.backoff))
                 return
@@ -93,6 +96,10 @@ class TaskManager(object):
 
             for e in end_lease_events:
                 e.set()
+        except requests.exceptions.HTTPError as e:
+            log.exception(e)
+            time.sleep(next(self.backoff))
+            return
         except Exception as e:
             log.exception(e)
             self.stop_event.set()
