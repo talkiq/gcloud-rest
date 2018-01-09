@@ -42,9 +42,18 @@ class TaskManager(object):
 
     def find_tasks_forever(self):
         while not self.stop_event.is_set():
-            self.find_and_process_work()
-            self.backoff.send(None)
-            self.backoff.send('reset')
+            try:
+                churning = self.find_and_process_work()
+            except Exception as e:
+                log.exception(e)
+                raise
+
+            if churning:
+                time.sleep(next(self.backoff))
+            else:
+                self.backoff.send(None)
+                self.backoff.send('reset')
+
 
     def find_and_process_work(self):
         """
@@ -57,53 +66,47 @@ class TaskManager(object):
         try:
             task_lease = self.tq.lease(num_tasks=self.batch_size,
                                        lease_duration=self.lease_seconds)
-
-            if not task_lease:
-                time.sleep(next(self.backoff))
-                return
-
-            tasks = task_lease.get('tasks')
-            log.info('grabbed %d tasks', len(tasks))
-
-            if self.burn:
-                to_burn = tasks[1:]
-                tasks = [tasks[0]]
-
-                for task in to_burn:
-                    log.info('burning task %s', task.get('name'))
-                    threading.Thread(target=self.tq.delete,
-                                     args=(task.get('name'),)).start()
-
-            end_lease_events = []
-            payloads = []
-            for task in tasks:
-                data = decode(task['pullMessage']['payload']).decode()
-                payload = json.loads(data)
-                end_lease_event = threading.Event()
-
-                threading.Thread(
-                    target=self.lease_manager,
-                    args=(end_lease_event, task)
-                ).start()
-
-                payloads.append(payload)
-                end_lease_events.append(end_lease_event)
-
-            results = self.worker(payloads)
-
-            for task, payload, result in zip(tasks, payloads, results):
-                self.check_task_result(task, payload, result)
-
-            for e in end_lease_events:
-                e.set()
         except requests.exceptions.HTTPError as e:
             log.exception(e)
-            time.sleep(next(self.backoff))
-            return
-        except Exception as e:
-            log.exception(e)
-            self.stop_event.set()
-            raise
+            return True
+
+        if not task_lease:
+            return True
+
+        tasks = task_lease.get('tasks')
+        log.info('grabbed %d tasks', len(tasks))
+
+        if self.burn:
+            to_burn = tasks[1:]
+            tasks = [tasks[0]]
+
+            for task in to_burn:
+                log.info('burning task %s', task.get('name'))
+                threading.Thread(target=self.tq.delete,
+                                 args=(task.get('name'),)).start()
+
+        end_lease_events = []
+        payloads = []
+        for task in tasks:
+            data = decode(task['pullMessage']['payload']).decode()
+            payload = json.loads(data)
+            end_lease_event = threading.Event()
+
+            threading.Thread(
+                target=self.lease_manager,
+                args=(end_lease_event, task)
+            ).start()
+
+            payloads.append(payload)
+            end_lease_events.append(end_lease_event)
+
+        results = self.worker(payloads)
+
+        for task, payload, result in zip(tasks, payloads, results):
+            self.check_task_result(task, payload, result)
+
+        for e in end_lease_events:
+            e.set()
 
     def check_task_result(self, task, payload, result):
         if isinstance(result, FailFastError):
