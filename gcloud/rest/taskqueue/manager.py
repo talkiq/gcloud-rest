@@ -8,18 +8,10 @@ import traceback
 from gcloud.rest.core import backoff
 from gcloud.rest.taskqueue.error import FailFastError
 from gcloud.rest.taskqueue.queue import TaskQueue
-from gcloud.rest.taskqueue.utils import clean_b64decode
+from gcloud.rest.taskqueue.utils import decode
 
 
 log = logging.getLogger(__name__)
-
-# https://github.com/google/google-api-python-client/issues/299
-logging.getLogger('googleapiclient.discovery_cache').setLevel(logging.CRITICAL)
-
-SCOPES = [
-    'https://www.googleapis.com/auth/taskqueue',
-    'https://www.googleapis.com/auth/taskqueue.consumer',
-]
 
 
 class TaskManager(object):
@@ -30,8 +22,6 @@ class TaskManager(object):
                  google_api_lock=None, lease_seconds=60, retry_limit=None,
                  service_file=None):
         # pylint: disable=too-many-arguments
-        self.project = project
-        self.taskqueue = taskqueue
         self.task_worker = task_worker
 
         self.backoff = backoff(base=backoff_base, factor=backoff_factor,
@@ -84,8 +74,8 @@ class TaskManager(object):
             end_lease_events = []
             payloads = []
             for task in tasks:
-                data = clean_b64decode(task['pullMessage']['payload'])
-                payload = json.loads(data.decode())
+                data = decode(task['pullMessage']['payload']).decode()
+                payload = json.loads(data)
                 end_lease_event = threading.Event()
 
                 threading.Thread(
