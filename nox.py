@@ -20,7 +20,7 @@ def unit_tests(session, python_version):
         '--cov=tests.unit',
         '--cov-append',
         '--cov-report=',
-        '--cov-fail-under=36',
+        '--cov-fail-under=35',
         os.path.join('tests', 'unit'),
         *session.posargs)
 
@@ -44,7 +44,7 @@ def integration_tests(session, python_version):
         '--cov=tests.integration',
         '--cov-append',
         '--cov-report=',
-        '--cov-fail-under=0',
+        '--cov-fail-under=10',
         os.path.join('tests', 'integration'),
         *session.posargs)
 
