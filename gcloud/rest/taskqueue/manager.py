@@ -13,14 +13,6 @@ from gcloud.rest.taskqueue.utils import decode
 
 log = logging.getLogger(__name__)
 
-# https://github.com/google/google-api-python-client/issues/299
-logging.getLogger('googleapiclient.discovery_cache').setLevel(logging.CRITICAL)
-
-SCOPES = [
-    'https://www.googleapis.com/auth/taskqueue',
-    'https://www.googleapis.com/auth/taskqueue.consumer',
-]
-
 
 class TaskManager(object):
     # pylint: disable=too-many-instance-attributes
