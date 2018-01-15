@@ -21,7 +21,7 @@ def raise_for_status(resp):
     except requests.exceptions.HTTPError as e:
         try:
             log.error(e.response.json())
-        except Exception:  # pylint: disable=broad-except
+        except ValueError:
             log.error(e.response.text)
 
         raise
