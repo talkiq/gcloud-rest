@@ -1,6 +1,7 @@
 import datetime
 import json
 import logging
+import multiprocessing
 import threading
 import time
 import traceback
@@ -94,17 +95,18 @@ class TaskManager(object):
                 json.loads(decode(task['pullMessage']['payload']).decode()))
 
             end_lease = threading.Event()
-            lease_manager = threading.Thread(target=self.lease_manager,
-                                             args=(end_lease, task['name']))
+            lease_manager = multiprocessing.Process(
+                target=self.lease_manager, args=(end_lease, task['name']))
             lease_manager.start()
             leasers.append((end_lease, lease_manager))
 
-        results = self.worker(payloads)
-
-        for (e, _) in leasers:
-            e.set()
-        for (_, lm) in leasers:
-            lm.join()
+        try:
+            results = self.worker(payloads)
+        finally:
+            for (e, _) in leasers:
+                e.set()
+            for (_, lm) in leasers:
+                lm.join()
 
         for task, payload, result in zip(tasks, payloads, results):
             self.check_task_result(task['name'], payload, result)
