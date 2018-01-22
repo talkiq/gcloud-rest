@@ -93,12 +93,12 @@ class TaskQueue(object):
         return resp.json()
 
     def drain(self):
-        tasks = self.lease(num_tasks=1000)
+        tasks = self.list(page_size=1000)
         while tasks:
             for task in tasks['tasks']:
                 self.delete(task['name'])
 
-            tasks = self.lease(num_tasks=1000)
+            tasks = self.list(page_size=1000)
 
     # https://cloud.google.com/cloud-tasks/docs/reference/rest/v2beta2/projects.locations.queues.tasks/get
     def get(self, tname, full=False):
