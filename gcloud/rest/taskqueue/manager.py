@@ -129,10 +129,13 @@ class TaskManager(object):
 
             retries = task['status']['attemptDispatchCount']
             if self.retry_limit is None or retries < self.retry_limit:
+                log.info('%d retries for task %s is below limit %d', retries,
+                         tname, self.retry_limit)
                 threading.Thread(target=self.tq.cancel, args=(task,)).start()
                 return
 
-            log.warning('exceeded retry_limit, failing task')
+            log.warning('retry_limit exceeded, failing task %s at %d', tname,
+                        retries)
             self.fail_task(payload, result)
             threading.Thread(target=self.tq.delete,
                              args=(task['name'],)).start()
