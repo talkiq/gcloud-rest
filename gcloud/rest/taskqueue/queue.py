@@ -96,9 +96,13 @@ class TaskQueue(object):
         tasks = self.list(page_size=1000)
         while tasks:
             for task in tasks['tasks']:
-                self.delete(task['name'])
+                try:
+                    self.delete(task['name'])
+                except requests.exceptions.HTTPError:
+                    log.info('task %s was already deleted', task['name'])
 
-            tasks = self.list(page_size=1000)
+            tasks = self.list(page_size=1000,
+                              page_token=tasks['nextPageToken'])
 
     # https://cloud.google.com/cloud-tasks/docs/reference/rest/v2beta2/projects.locations.queues.tasks/get
     def get(self, tname, full=False):

@@ -22,7 +22,8 @@ def test_lifecycle(caplog, mocker):
     worker = mocker.Mock()
     worker.return_value = ['ok' for _ in tasks]
 
-    tm = TaskManager(project, task_queue, worker, batch_size=len(tasks))
+    tm = TaskManager(project, task_queue, worker, batch_size=len(tasks),
+                     lease_seconds=10)
 
     # drain old test tasks
     drain = tm.tq.drain()
