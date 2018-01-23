@@ -84,8 +84,7 @@ class TaskManager(object):
 
             for task in to_burn:
                 log.info('burning task %s', task.get('name'))
-                threading.Thread(target=self.tq.delete,
-                                 args=(task.get('name'),)).start()
+                self.tq.delete(task.get('name'))
 
         leasers = []
         payloads = []
@@ -126,7 +125,7 @@ class TaskManager(object):
             log.exception(result)
 
             self.fail_task(payload, result)
-            threading.Thread(target=self.tq.cancel, args=(task,)).start()
+            self.tq.cancel(task)
             return
 
         if isinstance(result, Exception):
@@ -137,17 +136,16 @@ class TaskManager(object):
             if self.retry_limit is None or retries < self.retry_limit:
                 log.info('%d retries for task %s is below limit %d', retries,
                          tname, self.retry_limit)
-                threading.Thread(target=self.tq.cancel, args=(task,)).start()
+                self.tq.cancel(task)
                 return
 
             log.warning('retry_limit exceeded, failing task %s at %d', tname,
                         retries)
             self.fail_task(payload, result)
-            threading.Thread(target=self.tq.delete,
-                             args=(task['name'],)).start()
+            self.tq.delete(task['name'])
             return
 
-        threading.Thread(target=self.tq.ack, args=(task,)).start()
+        self.tq.ack(task)
 
     def fail_task(self, payload, exception):
         if not self.deadletter_insert_function:
