@@ -100,12 +100,13 @@ class TaskManager(object):
             lease_manager.start()
             leasers.append((end_lease, lease_manager))
 
-        results = self.worker(payloads)
-
-        for (e, _) in leasers:
-            e.set()
-        for (_, lm) in leasers:
-            lm.join()
+        try:
+            results = self.worker(payloads)
+        finally:
+            for (e, _) in leasers:
+                e.set()
+            for (_, lm) in leasers:
+                lm.join()
 
         for task, payload, result in zip(tasks, payloads, results):
             self.check_task_result(task['name'], payload, result)
