@@ -2,7 +2,6 @@ import datetime
 import json
 import logging
 import multiprocessing
-import threading
 import time
 import traceback
 
@@ -35,10 +34,10 @@ class TaskManager(object):
         self.lease_seconds = lease_seconds
         self.retry_limit = retry_limit
 
-        self.stop_event = threading.Event()
+        self.stop_event = multiprocessing.Event()
         self.tasks = dict()
 
-        self.google_api_lock = google_api_lock or threading.RLock()
+        self.google_api_lock = google_api_lock or multiprocessing.RLock()
         self.tq = TaskQueue(project, taskqueue, creds=service_file,
                             google_api_lock=self.google_api_lock)
 
