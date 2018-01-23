@@ -46,9 +46,9 @@ class TaskManager(object):
         while not self.stop_event.is_set():
             try:
                 churning = self.find_and_process_work()
-            except Exception as e:
+            except Exception as e:  # pylint: disable=broad-except
                 log.exception(e)
-                raise
+                continue
 
             if churning:
                 time.sleep(next(self.backoff))
@@ -102,13 +102,19 @@ class TaskManager(object):
 
         try:
             results = self.worker(payloads)
-        finally:
+        except Exception:
+            # Ensure subprocesses die. N.B. doing this in multiple loops is
+            # overall faster, since we don't care about the renewed tasks.
             for (e, _) in leasers:
                 e.set()
             for (_, lm) in leasers:
                 lm.join()
+            raise
 
-        for task, payload, result in zip(tasks, payloads, results):
+        for ((e, lm), task, payload, result) in zip(leasers, tasks, payloads,
+                                                    results):
+            e.set()
+            lm.join()
             self.check_task_result(task['name'], payload, result)
 
     def check_task_result(self, tname, payload, result):
