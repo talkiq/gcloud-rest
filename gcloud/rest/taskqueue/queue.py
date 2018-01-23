@@ -99,7 +99,7 @@ class TaskQueue(object):
                 try:
                     self.delete(task['name'])
                 except requests.exceptions.HTTPError:
-                    log.info('task %s was already deleted', task['name'])
+                    pass
 
             tasks = self.list(page_size=1000,
                               page_token=tasks['nextPageToken'])
