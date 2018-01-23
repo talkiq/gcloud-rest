@@ -85,7 +85,7 @@ def test_multiple_leases_churn(caplog, mocker):
     ]
 
     def succeed_after_multiple_leases(ts):
-        _ = [x**2 for x in range(40_000_000)]
+        _ = [x**2 for x in range(40000000)]
         return ['ok' for _ in ts]
 
     worker = mocker.Mock()
