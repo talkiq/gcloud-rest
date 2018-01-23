@@ -35,7 +35,6 @@ class TaskManager(object):
         self.retry_limit = retry_limit
 
         self.stop_event = multiprocessing.Event()
-        self.tasks = dict()
 
         self.google_api_lock = google_api_lock or multiprocessing.RLock()
         self.tq = TaskQueue(project, taskqueue, creds=service_file,
@@ -88,36 +87,38 @@ class TaskManager(object):
         leasers = []
         payloads = []
         for task in tasks:
-            self.tasks[task['name']] = task
             payloads.append(
                 json.loads(decode(task['pullMessage']['payload']).decode()))
 
+            data = multiprocessing.Manager().dict()
+            data['scheduleTime'] = task['scheduleTime']
             end_lease = multiprocessing.Event()
+
             lease_manager = multiprocessing.Process(
-                target=self.lease_manager, args=(end_lease, task['name']))
+                target=self.lease_manager, args=(end_lease, task, data))
             lease_manager.start()
-            leasers.append((end_lease, lease_manager))
+
+            leasers.append((end_lease, lease_manager, data))
 
         try:
             results = self.worker(payloads)
         except Exception:
             # Ensure subprocesses die. N.B. doing this in multiple loops is
             # overall faster, since we don't care about the renewed tasks.
-            for (e, _) in leasers:
+            for (e, _, _) in leasers:
                 e.set()
-            for (_, lm) in leasers:
+            for (_, lm, _) in leasers:
                 lm.join()
             raise
 
-        for ((e, lm), task, payload, result) in zip(leasers, tasks, payloads,
-                                                    results):
+        for ((e, lm, data), task, payload, result) in zip(leasers, tasks,
+                                                          payloads, results):
             e.set()
             lm.join()
-            self.check_task_result(task['name'], payload, result)
+            self.check_task_result(task, data, payload, result)
 
-    def check_task_result(self, tname, payload, result):
-        task = self.tasks[tname]
-        del self.tasks[tname]
+    def check_task_result(self, task, data, payload, result):
+        task['scheduleTime'] = data['scheduleTime']
 
         if isinstance(result, FailFastError):
             log.error('[FailFastError] failed to process task: %s', payload)
@@ -134,12 +135,12 @@ class TaskManager(object):
             retries = task['status']['attemptDispatchCount']
             if self.retry_limit is None or retries < self.retry_limit:
                 log.info('%d retries for task %s is below limit %d', retries,
-                         tname, self.retry_limit)
+                         task['name'], self.retry_limit)
                 self.tq.cancel(task)
                 return
 
-            log.warning('retry_limit exceeded, failing task %s at %d', tname,
-                        retries)
+            log.warning('retry_limit exceeded, failing task %s at %d',
+                        task['name'], retries)
             self.fail_task(payload, result)
             self.tq.delete(task['name'])
             return
@@ -162,7 +163,7 @@ class TaskManager(object):
 
         self.deadletter_insert_function(payload.get('name'), properties)
 
-    def lease_manager(self, lease_event, tname):
+    def lease_manager(self, lease_event, task, data):
         """
         This function extends the Pull Task Queue lease to make sure no other
         workers pick up the same task. This is force-killed after the task
@@ -172,10 +173,12 @@ class TaskManager(object):
             time.sleep(self.lease_seconds / 2)
 
             try:
-                log.info('extending lease for %s', tname)
-                renewed = self.tq.renew(self.tasks[tname],
+                log.info('extending lease for %s', task['name'])
+
+                task['scheduleTime'] = data['scheduleTime']
+                renewed = self.tq.renew(task,
                                         lease_duration=self.lease_seconds)
-                self.tasks[tname] = renewed
+                data['scheduleTime'] = renewed['scheduleTime']
             except Exception as e:  # pylint: disable=broad-except
                 log.exception(e)
                 # stop lease extension thread but not main thread
