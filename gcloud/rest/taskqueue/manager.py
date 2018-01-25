@@ -29,7 +29,10 @@ def lease_manager(project, taskqueue, creds, google_api_lock, event, task,
                    google_api_lock=google_api_lock)
 
     while not event.is_set():
-        time.sleep(lease_seconds / 2)
+        for _ in range(int(lease_seconds // 2) * 10):
+            time.sleep(0.1)
+            if event.is_set():
+                break
 
         try:
             log.info('extending lease for %s', task['name'])
@@ -186,6 +189,7 @@ class TaskManager(object):
             self.tq.delete(task['name'])
             return
 
+        log.info('successfully processed task: %s', task['name'])
         self.tq.ack(task)
 
     def fail_task(self, payload, exception):
