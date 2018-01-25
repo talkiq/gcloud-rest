@@ -28,11 +28,11 @@ def raise_for_status(resp):
 
 
 class TaskQueue(object):
-    def __init__(self, project, task_queue, creds=None, google_api_lock=None,
+    def __init__(self, project, taskqueue, creds=None, google_api_lock=None,
                  location=LOCATION):
         # pylint: disable=too-many-arguments
         self.api_root = '{}/projects/{}/locations/{}/queues/{}'.format(
-            API_ROOT, project, location, task_queue)
+            API_ROOT, project, location, taskqueue)
 
         self.google_api_lock = google_api_lock or threading.RLock()
 

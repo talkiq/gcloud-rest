@@ -16,6 +16,32 @@ from gcloud.rest.taskqueue.utils import decode
 log = logging.getLogger(__name__)
 
 
+def lease_manager(project, taskqueue, creds, google_api_lock, event, task,
+                  lease_seconds, data):
+    # pylint: disable=too-many-arguments
+    """
+    This function extends the Pull Task Queue lease to make sure no other
+    workers pick up the same task. This is force-killed after the task work
+    is complete
+    """
+    tq = TaskQueue(project, taskqueue, creds=creds,
+                   google_api_lock=google_api_lock)
+
+    while not event.is_set():
+        time.sleep(lease_seconds / 2)
+
+        try:
+            log.info('extending lease for %s', task['name'])
+
+            task['scheduleTime'] = data['scheduleTime']
+            renewed = tq.renew(task, lease_duration=lease_seconds)
+            data['scheduleTime'] = renewed['scheduleTime']
+        except Exception as e:  # pylint: disable=broad-except
+            log.error('failed to autorenew task: %s', task['name'])
+            log.exception(e)
+            event.set()
+
+
 class TaskManager(object):
     # pylint: disable=too-many-instance-attributes
     def __init__(self, project, taskqueue, worker, backoff_base=2,
@@ -24,7 +50,10 @@ class TaskManager(object):
                  google_api_lock=None, lease_seconds=60, retry_limit=None,
                  service_file=None):
         # pylint: disable=too-many-arguments
+        self.project = project
+        self.taskqueue = taskqueue
         self.worker = worker
+        self.creds = service_file
 
         self.backoff = backoff(base=backoff_base, factor=backoff_factor,
                                max_value=backoff_max_value)
@@ -38,7 +67,7 @@ class TaskManager(object):
         self.stop_event = multiprocessing.Event()
 
         self.google_api_lock = google_api_lock or multiprocessing.RLock()
-        self.tq = TaskQueue(project, taskqueue, creds=service_file,
+        self.tq = TaskQueue(project, taskqueue, creds=self.creds,
                             google_api_lock=self.google_api_lock)
 
     def find_tasks_forever(self):
@@ -93,13 +122,16 @@ class TaskManager(object):
 
             data = self.manager.dict()
             data['scheduleTime'] = task['scheduleTime']
-            end_lease = multiprocessing.Event()
+            event = multiprocessing.Event()
 
-            lease_manager = multiprocessing.Process(
-                target=self.lease_manager, args=(end_lease, task, data))
-            lease_manager.start()
+            lm = multiprocessing.Process(
+                target=lease_manager,
+                args=(self.project, self.taskqueue, self.creds,
+                      self.google_api_lock, event, task, self.lease_seconds,
+                      data))
+            lm.start()
 
-            leasers.append((end_lease, lease_manager, data))
+            leasers.append((event, lm, data))
 
         try:
             results = self.worker(payloads)
@@ -165,27 +197,6 @@ class TaskManager(object):
         }
 
         self.deadletter_insert_function(payload.get('name'), properties)
-
-    def lease_manager(self, lease_event, task, data):
-        """
-        This function extends the Pull Task Queue lease to make sure no other
-        workers pick up the same task. This is force-killed after the task
-        work is complete
-        """
-        while not lease_event.is_set() and not self.stop_event.is_set():
-            time.sleep(self.lease_seconds / 2)
-
-            try:
-                log.info('extending lease for %s', task['name'])
-
-                task['scheduleTime'] = data['scheduleTime']
-                renewed = self.tq.renew(task,
-                                        lease_duration=self.lease_seconds)
-                data['scheduleTime'] = renewed['scheduleTime']
-            except Exception as e:  # pylint: disable=broad-except
-                log.exception(e)
-                # stop lease extension thread but not main thread
-                lease_event.set()
 
     def stop(self):
         self.stop_event.set()
