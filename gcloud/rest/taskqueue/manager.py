@@ -34,6 +34,7 @@ class TaskManager(object):
         self.lease_seconds = lease_seconds
         self.retry_limit = retry_limit
 
+        self.manager = multiprocessing.Manager()
         self.stop_event = multiprocessing.Event()
 
         self.google_api_lock = google_api_lock or multiprocessing.RLock()
@@ -90,7 +91,7 @@ class TaskManager(object):
             payloads.append(
                 json.loads(decode(task['pullMessage']['payload']).decode()))
 
-            data = multiprocessing.Manager().dict()
+            data = self.manager.dict()
             data['scheduleTime'] = task['scheduleTime']
             end_lease = multiprocessing.Event()
 
