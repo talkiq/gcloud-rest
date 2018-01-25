@@ -129,6 +129,7 @@ class TaskManager(object):
                 args=(self.project, self.taskqueue, self.creds,
                       self.google_api_lock, event, task, self.lease_seconds,
                       data))
+            lm.daemon = True
             lm.start()
 
             leasers.append((event, lm, data))
