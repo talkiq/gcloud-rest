@@ -44,7 +44,7 @@ def integration_tests(session, python_version):
         '--cov=tests.integration',
         '--cov-append',
         '--cov-report=',
-        '--cov-fail-under=57',
+        '--cov-fail-under=55',
         os.path.join('tests', 'integration'),
         *session.posargs)
 
