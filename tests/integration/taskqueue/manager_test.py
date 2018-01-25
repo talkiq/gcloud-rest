@@ -26,7 +26,7 @@ def test_lifecycle(caplog, mocker):
                      lease_seconds=10)
 
     # drain old test tasks
-    drain = tm.tq.drain()
+    tm.tq.drain()
 
     # insert new ones
     for task in tasks:
@@ -60,7 +60,7 @@ def test_multiple_leases(caplog, mocker):
                      lease_seconds=4)
 
     # drain old test tasks
-    drain = tm.tq.drain()
+    tm.tq.drain()
 
     # insert new ones
     for task in tasks:
@@ -95,7 +95,7 @@ def test_multiple_leases_churn(caplog, mocker):
                      lease_seconds=4)
 
     # drain old test tasks
-    drain = tm.tq.drain()
+    tm.tq.drain()
     # insert new ones
     for task in tasks:
         tm.tq.insert(encode(json.dumps(task)),
