@@ -118,6 +118,8 @@ class TaskManager(object):
             lm.join()
             self.check_task_result(task, data, payload, result)
 
+        return False
+
     def check_task_result(self, task, data, payload, result):
         task['scheduleTime'] = data['scheduleTime']
 

@@ -1,8 +1,10 @@
 repos:
 -   repo: git://github.com/pre-commit/pre-commit-hooks
-    sha: v1.1.0
+    sha: v1.2.0
     hooks:
     -   id: check-ast
+    -   id: check-builtin-literals
+        args: [--no-allow-dict-kwargs]
     -   id: check-case-conflict
     -   id: check-executables-have-shebangs
     -   id: check-json
@@ -21,7 +23,7 @@ repos:
     -   id: requirements-txt-fixer
     -   id: trailing-whitespace
 -   repo: git://github.com/pre-commit/mirrors-pylint
-    sha: v1.7.4
+    sha: v1.8.1
     hooks:
     -   id: pylint
         args:
@@ -31,12 +33,11 @@ repos:
         - -d invalid-name
         - -d locally-disabled
         - -d missing-docstring
-        - -d unused-variable  # TODO: bug in pylint?
 -   repo: git://github.com/Lucas-C/pre-commit-hooks
     sha: v1.1.4
     hooks:
     -   id: remove-tabs
 -   repo: https://github.com/asottile/reorder_python_imports.git
-    sha: v0.3.5
+    sha: v1.0.1
     hooks:
     -   id: reorder-python-imports
