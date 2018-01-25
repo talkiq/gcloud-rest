@@ -2,6 +2,7 @@ import datetime
 import json
 import logging
 import multiprocessing
+import socket
 import time
 import traceback
 
@@ -96,6 +97,10 @@ class TaskManager(object):
         try:
             task_lease = self.tq.lease(num_tasks=self.batch_size,
                                        lease_duration=self.lease_seconds)
+        except socket.error as e:
+            log.error('process pool broke, quitting TaskManager')
+            self.stop()
+            raise
         except requests.exceptions.HTTPError as e:
             log.exception(e)
             return True
