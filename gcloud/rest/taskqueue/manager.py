@@ -2,7 +2,6 @@ import datetime
 import json
 import logging
 import multiprocessing
-import socket
 import time
 import traceback
 
@@ -15,6 +14,10 @@ from gcloud.rest.taskqueue.utils import decode
 
 
 log = logging.getLogger(__name__)
+
+
+class BrokenTaskManagerException(Exception):
+    pass
 
 
 def lease_manager(project, taskqueue, creds, google_api_lock, event, task,
@@ -78,6 +81,8 @@ class TaskManager(object):
         while not self.stop_event.is_set():
             try:
                 churning = self.find_and_process_work()
+            except BrokenTaskManagerException:
+                raise
             except Exception as e:  # pylint: disable=broad-except
                 log.exception(e)
                 continue
@@ -100,10 +105,6 @@ class TaskManager(object):
         try:
             task_lease = self.tq.lease(num_tasks=self.batch_size,
                                        lease_duration=self.lease_seconds)
-        except socket.error as e:
-            log.error('process pool broke, quitting TaskManager')
-            self.stop()
-            raise
         except requests.exceptions.HTTPError as e:
             log.exception(e)
             return True
@@ -128,17 +129,21 @@ class TaskManager(object):
             payloads.append(
                 json.loads(decode(task['pullMessage']['payload']).decode()))
 
-            data = self.manager.dict()
-            data['scheduleTime'] = task['scheduleTime']
-            event = multiprocessing.Event()
+            try:
+                data = self.manager.dict()
+                data['scheduleTime'] = task['scheduleTime']
+                event = multiprocessing.Event()
 
-            lm = multiprocessing.Process(
-                target=lease_manager,
-                args=(self.project, self.taskqueue, self.creds,
-                      self.google_api_lock, event, task, self.lease_seconds,
-                      data))
-            lm.daemon = True
-            lm.start()
+                lm = multiprocessing.Process(
+                    target=lease_manager,
+                    args=(self.project, self.taskqueue, self.creds,
+                          self.google_api_lock, event, task,
+                          self.lease_seconds, data))
+                lm.daemon = True
+                lm.start()
+            except Exception as e:
+                log.exception(e)
+                raise BrokenTaskManagerException('broken process pool')
 
             leasers.append((event, lm, data))
 
