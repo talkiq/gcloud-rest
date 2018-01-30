@@ -20,7 +20,7 @@ def unit_tests(session, python_version):
         '--cov=tests.unit',
         '--cov-append',
         '--cov-report=',
-        '--cov-fail-under=33',
+        '--cov-fail-under=32',
         os.path.join('tests', 'unit'),
         *session.posargs)
 
