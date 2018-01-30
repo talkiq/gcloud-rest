@@ -181,8 +181,12 @@ class TaskManager(object):
             log.error('failed to process task: %s', payload)
             log.exception(result)
 
+            if self.retry_limit is None:
+                self.tq.cancel(task)
+                return
+
             retries = int(task['status']['attemptDispatchCount'])
-            if self.retry_limit is None or retries < self.retry_limit:
+            if retries < self.retry_limit:
                 log.info('%d retries for task %s is below limit %d', retries,
                          task['name'], self.retry_limit)
                 self.tq.cancel(task)
