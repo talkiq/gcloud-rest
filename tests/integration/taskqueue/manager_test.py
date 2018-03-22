@@ -40,6 +40,7 @@ def test_lifecycle(caplog, mocker):
 
 
 @pytest.mark.slow
+@pytest.mark.xfail
 def test_multiple_leases(caplog, mocker):
     project = os.environ['GCLOUD_PROJECT']
     task_queue = 'test-pull'
@@ -75,6 +76,7 @@ def test_multiple_leases(caplog, mocker):
 
 
 @pytest.mark.slow
+@pytest.mark.xfail
 def test_multiple_leases_churn(caplog, mocker):
     project = os.environ['GCLOUD_PROJECT']
     task_queue = 'test-pull'
