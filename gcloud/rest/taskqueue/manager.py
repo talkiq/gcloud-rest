@@ -206,12 +206,12 @@ class TaskManager(object):
             return
 
         properties = {
-            'bucket': payload.get('bucket'),
             'error': str(exception),
             'generation': None,
             'metageneration': None,
+            'payload': payload,
             'time_created': datetime.datetime.now(),
-            'traceback': traceback.format_exc(exception),
+            'traceback': traceback.format_exc(),
             'update': None,
         }
 
