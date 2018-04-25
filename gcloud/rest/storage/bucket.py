@@ -29,7 +29,7 @@ class Bucket(object):
 
     def headers(self):
         return {
-            'Authorization': 'Bearer {}'.format(self.access_token)
+            'Authorization': 'Bearer {}'.format(self.access_token),
         }
 
     def download(self, object_name, params=None):
@@ -38,10 +38,23 @@ class Bucket(object):
         url = '{}/{}/o/{}'.format(API_ROOT, self.bucket, object_name)
 
         with self.google_api_lock:
-            resp = requests.get(url, headers=self.headers(), params=params or {})
+            resp = requests.get(url, headers=self.headers(),
+                                params=params or {})
 
         resp.raise_for_status()
         return resp.text
 
     def download_as_string(self, object_name):
         return self.download(object_name, params={'alt': 'media'})
+
+    def list_objects(self, prefix='', params=None):
+        params = params or {}
+        params['prefix'] = prefix
+
+        url = '{}/{}/o'.format(API_ROOT, self.bucket)
+
+        with self.google_api_lock:
+            resp = requests.get(url, headers=self.headers(), params=params)
+
+        resp.raise_for_status()
+        return [x['name'] for x in resp.json().get('items', list())]
