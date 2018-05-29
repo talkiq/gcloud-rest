@@ -17,8 +17,88 @@ Installation
 Usage
 -----
 
-We'll get to this soon -- we promise!
+This project currently exposes interfaces to ``Storage`` and ``CloudTasks``.
 
+Storage (see `bucket.py`_):
+
+.. code-block:: python
+
+    from gcloud.rest.storage import Bucket
+
+    bk = Bucket('my-project', 'bucket-name')
+
+    # list all objects
+    objects_in_bucket = bk.list_objects()
+    # list objects with prefix
+    objects_in_bucket = bk.list_objects(prefix='in/subdir/')
+
+    object = bk.download('object-name')
+    object_contents = bk.download_as_string('object-name')
+
+TaskQueue (for ``CloudTasks``, see `queue.py`_):
+
+.. code-block:: python
+
+    from gcloud.rest.taskqueue import TaskQueue
+    from gcloud.rest.taskqueue import decode
+    from gcloud.rest.taskqueue import encode
+
+    tq = TaskQueue('my-project', 'taskqueue-name')
+
+    # create a task
+    payload = 'aardvarks-are-awesome'
+    tq.insert(encode(payload))
+
+    # list and get tasks
+    tasks = tq.list()
+    random_task = tasks.get('tasks')[42]
+    random_task_body = tq.get(random_task['name'])
+
+    # lease, renew, and ack/cancel/delete tasks
+    task_leases = tq.lease(num_tasks=3)
+    tasks = task_lease.get('tasks')
+    # assert len(tasks) <= 3
+
+    for task in tasks:
+        payload = decode(task['pullMessage']['payload']).decode()
+
+        # you'll need to renew the task if you take longer than
+        # task['scheduleTime'] to process it
+        tq.renew(task)
+
+        # do something with payload
+
+        if success:
+            tq.ack(task)
+        elif temporary_failure:
+            tq.cancel(task)
+        elif permanent_failure:
+            tq.delete(task['name'])
+
+TaskManager (for ``CloudTasks``, see `manager.py`_):
+
+.. code-block:: python
+
+    from gcloud.rest.taskqueue import FailFastError
+    from gcloud.rest.taskqueue import TaskManager
+
+    def worker_method(payloads):
+        for task in payloads:
+            # do something with the task
+
+            if success:
+                yield 'anything'
+            elif temporary_failure:
+                yield Exception('insert message here')
+            elif permanent_failure:
+                yeild FailFastError('insert message here')
+
+    tm = TaskManager('my-project', 'taskqueue-name', worker_method)
+    tm.find_tasks_forever()
+
+.. _bucket.py: https://github.com/talkiq/gcloud-rest/blob/master/gcloud/rest/storage/bucket.py
+.. _manager.py: https://github.com/talkiq/gcloud-rest/blob/master/gcloud/rest/taskqueue/manager.py
+.. _queue.py: https://github.com/talkiq/gcloud-rest/blob/master/gcloud/rest/taskqueue/queue.py
 .. _CloudTasks API: https://cloud.google.com/cloud-tasks/docs/reference/rest/v2beta2/projects.locations.queues.tasks
 
 .. |pypi| image:: https://img.shields.io/pypi/v/gcloud-rest.svg?style=flat-square
