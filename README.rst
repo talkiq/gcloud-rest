@@ -16,8 +16,13 @@ Installation
 
 Usage
 -----
+.. code-block::python
+    from gcloud.rest.taskqueue import TaskQueue
+    q = TaskQueue('queue', 'taskqueue-name')
+    q.list()
+    task = tq.lease(num_tasks=3)
 
-We'll get to this soon -- we promise!
+Check `queue.py` for all the methods
 
 .. _CloudTasks API: https://cloud.google.com/cloud-tasks/docs/reference/rest/v2beta2/projects.locations.queues.tasks
 
