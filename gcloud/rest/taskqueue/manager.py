@@ -165,7 +165,7 @@ class TaskManager(object):
                       exc_info=result)
 
             self.fail_task(payload, result)
-            self.tq.cancel(task)
+            self.tq.delete(task)
             return
 
         if isinstance(result, Exception):
