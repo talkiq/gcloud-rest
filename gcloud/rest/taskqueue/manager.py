@@ -54,9 +54,8 @@ class TaskManager(object):
     # pylint: disable=too-many-instance-attributes
     def __init__(self, project, taskqueue, worker, backoff_base=2,
                  backoff_factor=1.1, backoff_max_value=60, batch_size=1,
-                 burn=False, deadletter_insert_function=None,
-                 google_api_lock=None, lease_seconds=60, retry_limit=None,
-                 service_file=None):
+                 deadletter_insert_function=None, google_api_lock=None,
+                 lease_seconds=60, retry_limit=None, service_file=None):
         # pylint: disable=too-many-arguments
         self.project = project
         self.taskqueue = taskqueue
@@ -66,7 +65,6 @@ class TaskManager(object):
         self.backoff = backoff(base=backoff_base, factor=backoff_factor,
                                max_value=backoff_max_value)
         self.batch_size = max(batch_size, 1)
-        self.burn = burn
         self.deadletter_insert_function = deadletter_insert_function
         self.lease_seconds = lease_seconds
         self.retry_limit = retry_limit
@@ -115,14 +113,6 @@ class TaskManager(object):
 
         tasks = task_lease.get('tasks')
         log.info('grabbed %d tasks', len(tasks))
-
-        if self.burn:
-            to_burn = tasks[1:]
-            tasks = [tasks[0]]
-
-            for task in to_burn:
-                log.info('burning task %s', task.get('name'))
-                self.tq.delete(task.get('name'))
 
         leasers = []
         payloads = []
