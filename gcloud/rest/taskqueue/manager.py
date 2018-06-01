@@ -44,8 +44,7 @@ def lease_manager(project, taskqueue, creds, google_api_lock, event, task,
             renewed = tq.renew(task, lease_duration=lease_seconds)
             data['scheduleTime'] = renewed['scheduleTime']
         except Exception as e:  # pylint: disable=broad-except
-            log.error('failed to autorenew task: %s', task['name'])
-            log.exception(e)
+            log.error('failed to autorenew task: %s', task['name'], exc_info=e)
             event.set()
 
 
@@ -170,16 +169,15 @@ class TaskManager(object):
         task['scheduleTime'] = data['scheduleTime']
 
         if isinstance(result, FailFastError):
-            log.error('[FailFastError] failed to process task: %s', payload)
-            log.exception(result)
+            log.error('[FailFastError] failed to process task: %s', payload,
+                      exc_info=result)
 
             self.fail_task(payload, result)
             self.tq.cancel(task)
             return
 
         if isinstance(result, Exception):
-            log.error('failed to process task: %s', payload)
-            log.exception(result)
+            log.error('failed to process task: %s', payload, exc_info=result)
 
             if self.retry_limit is None:
                 self.tq.cancel(task)
