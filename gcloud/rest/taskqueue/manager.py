@@ -47,6 +47,8 @@ def lease_manager(project, taskqueue, creds, google_api_lock, event, task,
             log.error('failed to autorenew task: %s', task['name'], exc_info=e)
             event.set()
 
+    log.debug('closing lease_manager for task %s', task['name'])
+
 
 class TaskManager(object):
     # pylint: disable=too-many-instance-attributes
