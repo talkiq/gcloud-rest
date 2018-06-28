@@ -17,7 +17,8 @@ Installation
 Usage
 -----
 
-This project currently exposes interfaces to ``Storage`` and ``CloudTasks``.
+This project currently exposes interfaces to ``CloudTasks``, ``KMS``, and
+``Storage``.
 
 Storage (see `bucket.py`_):
 
@@ -35,13 +36,29 @@ Storage (see `bucket.py`_):
     object = bk.download('object-name')
     object_contents = bk.download_as_string('object-name')
 
+KMS (see `client.py`_):
+
+.. code-block:: python
+
+    from gcloud.rest.kms import KMS
+    from gcloud.rest.core import encode
+
+    kms = KMS('my-project', 'my-keyring', 'my-key-name')
+
+    # encrypt
+    plaintext = 'the-best-animal-is-the-aardvark'
+    ciphertext = kms.encrypt(encode(plaintext))
+
+    # decrypt
+    assert kms.decode(encode(ciphertext)) == plaintext
+
 TaskQueue (for ``CloudTasks``, see `queue.py`_):
 
 .. code-block:: python
 
+    from gcloud.rest.core import decode
+    from gcloud.rest.core import encode
     from gcloud.rest.taskqueue import TaskQueue
-    from gcloud.rest.taskqueue import decode
-    from gcloud.rest.taskqueue import encode
 
     tq = TaskQueue('my-project', 'taskqueue-name')
 
@@ -97,6 +114,7 @@ TaskManager (for ``CloudTasks``, see `manager.py`_):
     tm.find_tasks_forever()
 
 .. _bucket.py: https://github.com/talkiq/gcloud-rest/blob/master/gcloud/rest/storage/bucket.py
+.. _client.py: https://github.com/talkiq/gcloud-rest/blob/master/gcloud/rest/kms/client.py
 .. _manager.py: https://github.com/talkiq/gcloud-rest/blob/master/gcloud/rest/taskqueue/manager.py
 .. _queue.py: https://github.com/talkiq/gcloud-rest/blob/master/gcloud/rest/taskqueue/queue.py
 .. _CloudTasks API: https://cloud.google.com/cloud-tasks/docs/reference/rest/v2beta2/projects.locations.queues.tasks

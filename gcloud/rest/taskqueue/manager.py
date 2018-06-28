@@ -8,9 +8,9 @@ import traceback
 import requests
 
 from gcloud.rest.core import backoff
+from gcloud.rest.core.util import decode
 from gcloud.rest.taskqueue.error import FailFastError
 from gcloud.rest.taskqueue.queue import TaskQueue
-from gcloud.rest.taskqueue.utils import decode
 
 
 log = logging.getLogger(__name__)
