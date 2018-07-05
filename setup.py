@@ -13,7 +13,7 @@ with open(os.path.join(PACKAGE_ROOT, 'requirements.txt')) as f:
 
 setuptools.setup(
     name='gcloud-rest',
-    version='1.4.0',
+    version='1.5.0',
     description='RESTful Python Client for Google Cloud',
     long_description=README,
     namespace_packages=[

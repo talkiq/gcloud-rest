@@ -117,8 +117,17 @@ class TaskManager(object):
         leasers = []
         payloads = []
         for task in tasks:
-            payloads.append(
-                json.loads(decode(task['pullMessage']['payload']).decode()))
+            payload = json.loads(
+                decode(task['pullMessage']['payload']).decode())
+            retries = int(task['status']['attemptDispatchCount'])
+            if self.retry_limit is not None and retries > 2 * self.retry_limit:
+                log.warning('force failing task %s with %d/%d retries',
+                            task['name'], retries, self.retry_limit)
+                self.fail_task(payload, 'force failed after too many attempts')
+                self.tq.delete(task['name'])
+                continue
+
+            payloads.append(payload)
 
             try:
                 data = self.manager.dict()
