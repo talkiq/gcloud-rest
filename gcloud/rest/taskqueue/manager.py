@@ -83,7 +83,8 @@ class TaskManager(object):
             except BrokenTaskManagerException:
                 raise
             except Exception as e:  # pylint: disable=broad-except
-                log.exception(e)
+                log.error('swallowing exception in find_and_process_work()',
+                          exc_info=e)
                 continue
 
             if churning:
@@ -105,7 +106,8 @@ class TaskManager(object):
             task_lease = self.tq.lease(num_tasks=self.batch_size,
                                        lease_duration=self.lease_seconds)
         except requests.exceptions.HTTPError as e:
-            log.exception(e)
+            log.error('got error attempting to lease tasks, retrying',
+                      exc_info=e)
             return True
 
         if not task_lease:
@@ -142,7 +144,7 @@ class TaskManager(object):
                 lm.daemon = True
                 lm.start()
             except Exception as e:
-                log.exception(e)
+                log.error('got error while scheduling task', exc_info=e)
                 raise BrokenTaskManagerException('broken process pool')
 
             leasers.append((event, lm, data))
