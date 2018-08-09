@@ -106,8 +106,9 @@ class TaskManager(object):
             task_lease = self.tq.lease(num_tasks=self.batch_size,
                                        lease_duration=self.lease_seconds)
         except requests.exceptions.HTTPError as e:
-            log.error('got error attempting to lease tasks, retrying',
-                      exc_info=e)
+            if e.response.status_code != 429:
+                log.error('got error attempting to lease tasks, retrying',
+                          exc_info=e)
             return True
 
         if not task_lease:
