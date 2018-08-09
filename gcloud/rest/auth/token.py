@@ -9,6 +9,12 @@ try:
 except ImportError:
     from urllib import urlencode
 
+# N.B. the cryptography library is required when calling jwt.encrypt() with
+# algorithm='RS256'. It does not need to be imported here, but this allows us
+# to throw this error at load time rather than lazily during normal operations,
+# where plumbing this error through will require several changes to otherwise-
+# good error handling.
+import cryptography  # pylint: disable=unused-import
 import jwt
 import requests
 
