@@ -114,9 +114,3 @@ workflows:
             - lint-py2
             - lint-py3
             - test
-
-experimental:
-  notify:
-    branches:
-      only:
-        - master
