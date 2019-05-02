@@ -1,9 +1,9 @@
-RESTful Google Cloud Client Library for Python
-==============================================
-
 **Deprecation Notice**: this project is no longer under development. It has
 been deprecated in favor of `gcloud-aio`_, which hs support for all the same
 APIs (and more!) and additionally includes support for ``asyncio``.
+
+RESTful Google Cloud Client Library for Python
+==============================================
 
 This project is a collection of Google Cloud client libraries for the REST-only
 APIs; its *raison d'etre* is to implement a simple `CloudTasks API`_ as well as
