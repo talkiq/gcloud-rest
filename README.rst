@@ -1,6 +1,10 @@
 RESTful Google Cloud Client Library for Python
 ==============================================
 
+**Deprecation Notice**: this project is no longer under development. It has
+been deprecated in favor of `gcloud-aio`_, which hs support for all the same
+APIs (and more!) and additionally includes support for ``asyncio``.
+
 This project is a collection of Google Cloud client libraries for the REST-only
 APIs; its *raison d'etre* is to implement a simple `CloudTasks API`_ as well as
 a more abstract TaskManager.
@@ -118,6 +122,7 @@ TaskManager (for ``CloudTasks``, see `manager.py`_):
 .. _manager.py: https://github.com/talkiq/gcloud-rest/blob/master/gcloud/rest/taskqueue/manager.py
 .. _queue.py: https://github.com/talkiq/gcloud-rest/blob/master/gcloud/rest/taskqueue/queue.py
 .. _CloudTasks API: https://cloud.google.com/cloud-tasks/docs/reference/rest/v2beta2/projects.locations.queues.tasks
+.. _gcloud-aio: https://github.com/talkiq/gcloud-aio
 
 .. |pypi| image:: https://img.shields.io/pypi/v/gcloud-rest.svg?style=flat-square
     :alt: Latest PyPI Version
