@@ -8,11 +8,16 @@ overview of how we've set this project up.
 Testing
 -------
 
-Tests are run with `nox`_. See ``noxfile.py`` for the scaffolding and the
-``tests/unit`` and ``tests/integration`` folders for the actual test code.
+Tests are run with `nox`_. See each project's ``noxfile.py`` for the scaffolding
+and the ``tests/unit`` and ``tests/integration`` folders for the actual test
+code.
 
-You can get nox with ``pip install nox`` and run the project's tests with
-``nox``.
+You can get nox with ``pip install nox`` and run a specific project's tests with
+``nox -f <project-folder>/noxfile.py``.
+
+Some project are still part of the ``gcloud-rest`` package. We are working on
+separating them but for now, run those projects' test together by running
+``nox``. The test scaffolding is in the root ``noxfile.py``.
 
 Local Development
 ~~~~~~~~~~~~~~~~~
@@ -71,6 +76,31 @@ in CI against all changesets.
 
 You can also run ``pre-commit`` in an ad-hoc fashion by calling
 ``pre-commit run --all-files``.
+
+CircleCI will also make sure that the code is correct in Python 2.7.
+To check that locally, run ``pre-commit run -c .pre-commit-config.py27.yaml --all-files``
+in a Python 2.7 environment.
+
+It may be useful to have two Python virtual environments and run pre-commit in both.
+
+Python 2.7:
+
+.. code-block:: console
+
+    $ virtualenv venv-27
+    $ source venv-27/bin/activate
+    $ pip install pre-commit
+    $ pre-commit run -c .pre-commit-config.py27.yaml --all-files
+
+Python 3.7:
+
+.. code-block:: console
+
+    $ python3 -m venv venv-37
+    $ source venv-37/bin/activate
+    $ pip install pre-commit
+    $ pre-commit run --all-files
+
 
 Other than the above enforced standards, we like code that is easy-to-read for
 any new or returning contributors with relevant comments where appropriate.

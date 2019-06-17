@@ -4,7 +4,8 @@ orbs:
   linter: thekevjames/linter@0.1
 
 jobs:
-  test:
+  # TODO: Remove old_nox when everything is split into modules
+  old_nox:
     docker:
       - image: thekevjames/nox:2019.5.30
     environment:
@@ -13,6 +14,19 @@ jobs:
       - run: echo ${GOOGLE_SERVICE_PUBLIC} | base64 -d > ${GOOGLE_APPLICATION_CREDENTIALS}
       - checkout
       - run: nox
+
+  nox:
+    docker:
+      - image: thekevjames/nox:2019.5.30
+    environment:
+      GOOGLE_APPLICATION_CREDENTIALS: /key.json
+    parameters:
+      folder:
+        type: string
+    steps:
+      - run: echo ${GOOGLE_SERVICE_PUBLIC} | base64 -d > ${GOOGLE_APPLICATION_CREDENTIALS}
+      - checkout
+      - run: nox -f <<parameters.folder>>/noxfile.py
 
   pypi:
     docker:
@@ -78,7 +92,14 @@ workflows:
             tags:
               only: /.*/
 
-      - test:
+      - old_nox:
+          filters:
+            tags:
+              only: /.*/
+
+      - nox:
+          name: test-datastore
+          folder: datastore
           filters:
             tags:
               only: /.*/
@@ -95,7 +116,8 @@ workflows:
             - lint-py35
             - lint-py36
             - lint-py37
-            - test
+            - old_nox
+            - test-datastore
       - github:
           context: org-global
           filters:
@@ -108,4 +130,5 @@ workflows:
             - lint-py35
             - lint-py36
             - lint-py37
-            - test
+            - old_nox
+            - test-datastore
