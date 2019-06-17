@@ -3,6 +3,7 @@
 *.egg-info/*
 .cache/*
 .coverage
+.idea/*
 .nox/*
 build/*
 dist/*
