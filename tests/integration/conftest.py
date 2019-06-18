@@ -11,3 +11,8 @@ def creds():
 @pytest.fixture(scope='module')
 def project():
     return 'voiceai-staging'
+
+
+@pytest.fixture(scope='module')
+def pull_queue_name():
+    return 'public-test'

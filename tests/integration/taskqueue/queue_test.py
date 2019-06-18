@@ -4,12 +4,10 @@ from gcloud.rest.taskqueue import encode
 from gcloud.rest.taskqueue import TaskQueue
 
 
-def test_lifecycle(project):
-    task_queue = 'test-pull'
-
+def test_lifecycle(project, creds, pull_queue_name):
     payload = 'do-the-lifecycle'
 
-    tq = TaskQueue(project, task_queue)
+    tq = TaskQueue(project, pull_queue_name, creds=creds)
 
     # drain old test tasks
     tq.drain()
