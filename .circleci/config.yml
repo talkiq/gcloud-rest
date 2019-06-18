@@ -54,13 +54,25 @@ workflows:
     jobs:
       - linter/pre-commit:
           python_version: 2.7.14
-          name: lint-py2
+          name: lint-py27
+          filters:
+            tags:
+              only: /.*/
+      - linter/pre-commit:
+          python_version: 3.5.7
+          name: lint-py35
+          filters:
+            tags:
+              only: /.*/
+      - linter/pre-commit:
+          python_version: 3.6.8
+          name: lint-py36
           filters:
             tags:
               only: /.*/
       - linter/pre-commit:
           python_version: 3.7.3
-          name: lint-py3
+          name: lint-py37
           filters:
             tags:
               only: /.*/
@@ -78,8 +90,10 @@ workflows:
             tags:
               only: /[0-9]+\.[0-9]+\.[0-9]+/
           requires:
-            - lint-py2
-            - lint-py3
+            - lint-py27
+            - lint-py35
+            - lint-py36
+            - lint-py37
             - test
       - github:
           context: org-global
@@ -89,6 +103,8 @@ workflows:
             tags:
               only: /[0-9]+\.[0-9]+\.[0-9]+/
           requires:
-            - lint-py2
-            - lint-py3
+            - lint-py27
+            - lint-py35
+            - lint-py36
+            - lint-py37
             - test

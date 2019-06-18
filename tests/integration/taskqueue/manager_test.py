@@ -1,5 +1,4 @@
 import json
-import os
 import time
 
 import pytest
@@ -9,8 +8,7 @@ from gcloud.rest.taskqueue import TaskManager
 
 
 @pytest.mark.xfail
-def test_lifecycle(caplog, mocker):
-    project = os.environ['GCLOUD_PROJECT']
+def test_lifecycle(caplog, mocker, project):
     task_queue = 'test-pull'
 
     tasks = [
@@ -42,8 +40,7 @@ def test_lifecycle(caplog, mocker):
 
 @pytest.mark.slow
 @pytest.mark.xfail
-def test_multiple_leases(caplog, mocker):
-    project = os.environ['GCLOUD_PROJECT']
+def test_multiple_leases(caplog, mocker, project):
     task_queue = 'test-pull'
 
     tasks = [
@@ -78,8 +75,7 @@ def test_multiple_leases(caplog, mocker):
 
 @pytest.mark.slow
 @pytest.mark.xfail
-def test_multiple_leases_churn(caplog, mocker):
-    project = os.environ['GCLOUD_PROJECT']
+def test_multiple_leases_churn(caplog, mocker, project):
     task_queue = 'test-pull'
 
     tasks = [

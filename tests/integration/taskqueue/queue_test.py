@@ -1,13 +1,10 @@
 from __future__ import print_function
 
-import os
-
 from gcloud.rest.taskqueue import encode
 from gcloud.rest.taskqueue import TaskQueue
 
 
-def test_lifecycle():
-    project = os.environ['GCLOUD_PROJECT']
+def test_lifecycle(project):
     task_queue = 'test-pull'
 
     payload = 'do-the-lifecycle'
