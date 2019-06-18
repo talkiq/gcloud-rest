@@ -3,7 +3,8 @@ import random
 
 
 def backoff(base=2, factor=1.1, max_value=None):
-    """Generator for exponential decay.
+    """
+    Generator for exponential decay.
 
     The Google docs warn to back off from polling their API if there is no
     work available in a task queue. So we do.

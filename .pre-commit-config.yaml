@@ -1,11 +1,11 @@
 repos:
--   repo: git://github.com/pre-commit/pre-commit-hooks
-    sha: v1.2.3
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v2.2.3
     hooks:
     -   id: check-ast
     -   id: check-builtin-literals
-        args: [--no-allow-dict-kwargs]
     -   id: check-case-conflict
+    -   id: check-docstring-first
     -   id: check-executables-have-shebangs
     -   id: check-json
     -   id: check-merge-conflict
@@ -19,29 +19,64 @@ repos:
     -   id: double-quote-string-fixer
     -   id: end-of-file-fixer
     -   id: file-contents-sorter
-        files: .gitignore
+        files: .(docker|git)ignore
     -   id: mixed-line-ending
         args: [--fix=lf]
     -   id: name-tests-test
     -   id: requirements-txt-fixer
     -   id: trailing-whitespace
--   repo: git://github.com/pre-commit/mirrors-pylint
-    sha: v1.8.4
+-   repo: https://github.com/pre-commit/mirrors-pylint
+    rev: v2.3.1
     hooks:
     -   id: pylint
         args:
-        - -d duplicate-code
+        - --max-line-length=79
+        - --ignore-imports=yes
         - -d fixme
         - -d import-error
         - -d invalid-name
         - -d locally-disabled
         - -d missing-docstring
--   repo: git://github.com/Lucas-C/pre-commit-hooks
-    sha: v1.1.5
+        - -d too-few-public-methods
+        - -d useless-object-inheritance  # necessary for Python 2 compatibility
+-   repo: https://github.com/Lucas-C/pre-commit-hooks
+    rev: v1.1.6
     hooks:
     -   id: remove-crlf
     -   id: remove-tabs
--   repo: git://github.com/asottile/reorder_python_imports
-    sha: v1.0.1
+-   repo: https://github.com/asottile/reorder_python_imports
+    rev: v1.5.0
     hooks:
     -   id: reorder-python-imports
+        args: [--py26-plus]
+-   repo: https://github.com/asottile/yesqa
+    rev: v0.0.11
+    hooks:
+    -   id: yesqa
+-   repo: https://github.com/pre-commit/mirrors-autopep8
+    rev: v1.4.4
+    hooks:
+    -   id: autopep8
+-   repo: https://github.com/PyCQA/pydocstyle
+    rev: 792b8d92  # TODO: >3.0.0
+    hooks:
+    -   id: pydocstyle
+        args:
+        - --ignore=D1,D203,D205,D212,D400,D401,D404
+-   repo: https://gitlab.com/pycqa/flake8
+    rev: 3.7.7
+    hooks:
+    -   id: flake8
+        args:
+        - --ignore=E501,W503,F401,F811
+-   repo: https://github.com/pre-commit/pygrep-hooks
+    rev: v1.4.0
+    hooks:
+    -   id: python-no-eval
+    -   id: python-no-log-warn
+    -   id: python-use-type-annotations
+    -   id: rst-backticks
+-   repo: https://github.com/Lucas-C/pre-commit-hooks-markup
+    rev: v1.0.0
+    hooks:
+    -   id: rst-linter

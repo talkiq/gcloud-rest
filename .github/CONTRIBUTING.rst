@@ -1,5 +1,5 @@
 Contributing to ``gcloud-rest``
-==============================
+===============================
 
 Thanks for contributing to ``gcloud-rest``! We appreciate contributions of any
 size and hope to make it easy for you to dive in. Here's the thousand-foot
