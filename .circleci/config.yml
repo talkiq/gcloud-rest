@@ -3,7 +3,7 @@ version: 2
 jobs:
   lint-py3:
     docker:
-      - image: python:3.7.4
+      - image: python:3.7.3
     steps:
       - checkout
       - run: pip install pre-commit
@@ -63,10 +63,6 @@ workflows:
   version: 2
   run-jobs:
     jobs:
-      - lint-py2:
-          filters:
-            tags:
-              only: /.*/
       - lint-py3:
           filters:
             tags:
@@ -85,7 +81,6 @@ workflows:
             tags:
               only: /[0-9]+\.[0-9]+\.[0-9]+/
           requires:
-            - lint-py2
             - lint-py3
             - test
       - github:
@@ -96,6 +91,5 @@ workflows:
             tags:
               only: /[0-9]+\.[0-9]+\.[0-9]+/
           requires:
-            - lint-py2
             - lint-py3
             - test
