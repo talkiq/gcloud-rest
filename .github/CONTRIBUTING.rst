@@ -8,10 +8,11 @@ overview of how we've set this project up.
 Testing
 -------
 
-Tests are run with `nox`_. See ``nox.py`` for the scaffolding and the ``tests/unit`` and
-``tests/integration`` folders for the actual test code.
+Tests are run with `nox`_. See ``noxfile.py`` for the scaffolding and the
+``tests/unit`` and ``tests/integration`` folders for the actual test code.
 
-You can get nox with ``pip install nox`` and run the project's tests with ``nox -f nox.py``.
+You can get nox with ``pip install nox`` and run the project's tests with
+``nox``.
 
 Local Development
 ~~~~~~~~~~~~~~~~~
