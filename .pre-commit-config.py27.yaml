@@ -26,7 +26,7 @@ repos:
     -   id: requirements-txt-fixer
     -   id: trailing-whitespace
 -   repo: https://github.com/pre-commit/mirrors-pylint
-    rev: v2.3.1
+    rev: v1.9.1
     hooks:
     -   id: pylint
         args:
@@ -38,7 +38,6 @@ repos:
         - -d locally-disabled
         - -d missing-docstring
         - -d too-few-public-methods
-        - -d useless-object-inheritance  # necessary for Python 2 compatibility
 -   repo: https://github.com/Lucas-C/pre-commit-hooks
     rev: v1.1.6
     hooks:
@@ -57,26 +56,9 @@ repos:
     rev: v1.4.4
     hooks:
     -   id: autopep8
--   repo: https://github.com/PyCQA/pydocstyle
-    rev: 792b8d92  # TODO: >3.0.0
-    hooks:
-    -   id: pydocstyle
-        args:
-        - --ignore=D1,D203,D205,D212,D400,D401,D404
--   repo: https://gitlab.com/pycqa/flake8
-    rev: 3.7.7
-    hooks:
-    -   id: flake8
-        args:
-        - --ignore=E501,W503,F401,F811
 -   repo: https://github.com/pre-commit/pygrep-hooks
     rev: v1.4.0
     hooks:
     -   id: python-no-eval
     -   id: python-no-log-warn
     -   id: python-use-type-annotations
-    -   id: rst-backticks
--   repo: https://github.com/Lucas-C/pre-commit-hooks-markup
-    rev: v1.0.0
-    hooks:
-    -   id: rst-linter

@@ -62,9 +62,6 @@ class Token(object):
                           algorithm='RS256')
 
     def acquire(self):
-        """
-        acquires a new token
-        """
         headers = {'Content-Type': 'application/x-www-form-urlencoded'}
         body = urlencode((
             ('grant_type', 'urn:ietf:params:oauth:grant-type:jwt-bearer'),

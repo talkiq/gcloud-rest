@@ -1,49 +1,24 @@
-version: 2
+version: 2.1
+
+orbs:
+  linter: thekevjames/linter@0.1
 
 jobs:
-  lint-py2:
-    docker:
-      - image: python:2.7.14
-    steps:
-      - checkout
-      - run: pip install pre-commit
-      - restore_cache:
-          keys:
-            - cache-pre-commit2-{{ checksum ".pre-commit-config.yaml" }}
-      - run: pre-commit run --all-files
-      - save_cache:
-          key: cache-pre-commit2-{{ checksum ".pre-commit-config.yaml" }}
-          paths:
-            - ~/.cache/pre-commit
-
-  lint-py3:
-    docker:
-      - image: python:3.6.2
-    steps:
-      - checkout
-      - run: pip install pre-commit
-      - restore_cache:
-          keys:
-            - cache-pre-commit3-{{ checksum ".pre-commit-config.yaml" }}
-      - run: pre-commit run --all-files
-      - save_cache:
-          key: cache-pre-commit3-{{ checksum ".pre-commit-config.yaml" }}
-          paths:
-            - ~/.cache/pre-commit
-
   test:
     docker:
-      - image: googleapis/nox:0.17.0
+      - image: thekevjames/nox:2019.5.30
+    environment:
+      GOOGLE_APPLICATION_CREDENTIALS: /key.json
     steps:
-      - run: echo ${GOOGLE_SERVICE_JSON} | base64 -d > ${GOOGLE_APPLICATION_CREDENTIALS}
+      - run: echo ${GOOGLE_SERVICE_PUBLIC} | base64 -d > ${GOOGLE_APPLICATION_CREDENTIALS}
       - checkout
       - run: nox
 
   pypi:
     docker:
-      - image: python:3.7.0-slim
+      - image: python:3.7.3-slim
     steps:
-      - run: pip install twine
+      - run: pip install pyopenssl twine
       - checkout
       - deploy:
           name: upload to pypi
@@ -53,7 +28,7 @@ jobs:
 
   github:
     docker:
-      - image: python:3.7.0-alpine3.8
+      - image: python:3.7.3-alpine3.8
     steps:
       - run: apk add --no-cache curl git openssh-client
       - checkout
@@ -75,14 +50,30 @@ jobs:
             cat release-description.md | ./bin/linux/amd64/github-release edit -t ${CIRCLE_TAG} -d -
 
 workflows:
-  version: 2
   run-jobs:
     jobs:
-      - lint-py2:
+      - linter/pre-commit:
+          name: lint-py27
+          config_file: .pre-commit-config.py27.yaml
+          python_version: 2.7.14
           filters:
             tags:
               only: /.*/
-      - lint-py3:
+      - linter/pre-commit:
+          name: lint-py35
+          python_version: 3.5.7
+          filters:
+            tags:
+              only: /.*/
+      - linter/pre-commit:
+          name: lint-py36
+          python_version: 3.6.8
+          filters:
+            tags:
+              only: /.*/
+      - linter/pre-commit:
+          name: lint-py37
+          python_version: 3.7.3
           filters:
             tags:
               only: /.*/
@@ -100,8 +91,10 @@ workflows:
             tags:
               only: /[0-9]+\.[0-9]+\.[0-9]+/
           requires:
-            - lint-py2
-            - lint-py3
+            - lint-py27
+            - lint-py35
+            - lint-py36
+            - lint-py37
             - test
       - github:
           context: org-global
@@ -111,6 +104,8 @@ workflows:
             tags:
               only: /[0-9]+\.[0-9]+\.[0-9]+/
           requires:
-            - lint-py2
-            - lint-py3
+            - lint-py27
+            - lint-py35
+            - lint-py36
+            - lint-py37
             - test
