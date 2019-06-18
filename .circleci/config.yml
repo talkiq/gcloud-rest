@@ -1,7 +1,7 @@
 version: 2.1
 
 orbs:
-  linter: thekevjames/linter@0
+  linter: thekevjames/linter@0.1
 
 jobs:
   test:
@@ -53,26 +53,27 @@ workflows:
   run-jobs:
     jobs:
       - linter/pre-commit:
-          python_version: 2.7.14
           name: lint-py27
+          config_file: .pre-commit-config.py27.yaml
+          python_version: 2.7.14
           filters:
             tags:
               only: /.*/
       - linter/pre-commit:
-          python_version: 3.5.7
           name: lint-py35
+          python_version: 3.5.7
           filters:
             tags:
               only: /.*/
       - linter/pre-commit:
-          python_version: 3.6.8
           name: lint-py36
+          python_version: 3.6.8
           filters:
             tags:
               only: /.*/
       - linter/pre-commit:
-          python_version: 3.7.3
           name: lint-py37
+          python_version: 3.7.3
           filters:
             tags:
               only: /.*/

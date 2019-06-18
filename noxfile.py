@@ -3,7 +3,7 @@ import os
 import nox
 
 
-@nox.session(python=['2.7', '3.5', '3.6', '3.7'])
+@nox.session(python=['2.7', '3.5', '3.6', '3.7'], reuse_venv=True)
 def unit_tests(session):
     session.install('pytest', 'pytest-cov')
     session.install('-e', '.')
@@ -13,7 +13,7 @@ def unit_tests(session):
                 *session.posargs)
 
 
-@nox.session(python=['2.7', '3.7'])
+@nox.session(python=['2.7', '3.7'], reuse_venv=True)
 def integration_tests(session):
     if not os.environ.get('GOOGLE_APPLICATION_CREDENTIALS'):
         session.skip('Credentials must be set via environment variable.')
@@ -26,14 +26,14 @@ def integration_tests(session):
                 os.path.join('tests', 'integration'), *session.posargs)
 
 
-@nox.session(python=['2.7', '3.7'])
+@nox.session(python=['2.7', '3.7'], reuse_venv=True)
 def lint_setup_py(session):
     session.install('docutils', 'Pygments')
     session.run('python', 'setup.py', 'check', '--restructuredtext',
                 '--strict')
 
 
-@nox.session(python=['3.7'])
+@nox.session(python=['3.7'], reuse_venv=True)
 def cover(session):
     session.install('coverage', 'pytest-cov')
 
