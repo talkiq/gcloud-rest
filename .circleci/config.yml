@@ -1,24 +1,9 @@
 version: 2
 
 jobs:
-  lint-py2:
-    docker:
-      - image: python:2.7.14
-    steps:
-      - checkout
-      - run: pip install pre-commit
-      - restore_cache:
-          keys:
-            - cache-pre-commit2-{{ checksum ".pre-commit-config.yaml" }}
-      - run: pre-commit run --all-files
-      - save_cache:
-          key: cache-pre-commit2-{{ checksum ".pre-commit-config.yaml" }}
-          paths:
-            - ~/.cache/pre-commit
-
   lint-py3:
     docker:
-      - image: python:3.6.2
+      - image: python:3.7.4
     steps:
       - checkout
       - run: pip install pre-commit
