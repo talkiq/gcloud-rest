@@ -32,22 +32,19 @@ repos:
         args:
         - --max-line-length=79
         - --ignore-imports=yes
+        - -d bad-continuation
         - -d fixme
         - -d import-error
         - -d invalid-name
         - -d locally-disabled
         - -d missing-docstring
         - -d too-few-public-methods
+        - -d too-many-arguments
 -   repo: https://github.com/Lucas-C/pre-commit-hooks
     rev: v1.1.6
     hooks:
     -   id: remove-crlf
     -   id: remove-tabs
--   repo: https://github.com/asottile/reorder_python_imports
-    rev: v1.5.0
-    hooks:
-    -   id: reorder-python-imports
-        args: [--py26-plus]
 -   repo: https://github.com/asottile/yesqa
     rev: v0.0.11
     hooks:
@@ -60,5 +57,4 @@ repos:
     rev: v1.4.0
     hooks:
     -   id: python-no-eval
-    -   id: python-no-log-warn
-    -   id: python-use-type-annotations
+    # -   id: python-no-log-warn TODO: fix the hook to not catch 'warnings.warn' and uncomment once done

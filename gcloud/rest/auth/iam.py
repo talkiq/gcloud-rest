@@ -1,8 +1,8 @@
 import json
 import threading
-from typing import Dict
-from typing import List
-from typing import Optional
+from typing import Dict  # pylint: disable=unused-import
+from typing import List  # pylint: disable=unused-import
+from typing import Optional  # pylint: disable=unused-import
 from typing import Union  # pylint: disable=unused-import
 
 import requests
@@ -17,12 +17,12 @@ API_ROOT_IAM_CREDENTIALS = 'https://iamcredentials.googleapis.com/v1'
 SCOPES = ['https://www.googleapis.com/auth/iam']
 
 
-class IamClient:
+class IamClient(object):
     def __init__(self,
                  service_file=None,  # type: Optional[str]
-                 session=None,  # type: requests.Session
-                 google_api_lock=None,  # type: threading.RLock
-                 token=None  # type: Token
+                 session=None,  # type: Optional[requests.Session]
+                 google_api_lock=None,  # type: Optional[threading.RLock]
+                 token=None  # type: Optional[Token]
                  ):
         # type: (...) -> None
         self.session = session
@@ -47,7 +47,6 @@ class IamClient:
         return self.token.service_data.get('client_email')
 
     # https://cloud.google.com/iam/reference/rest/v1/projects.serviceAccounts.keys/get
-    # pylint: disable=too-many-arguments
     def get_public_key(self,
                        key_id=None,                 # type: Optional[str]
                        key=None,                    # type: Optional[str]
@@ -108,7 +107,6 @@ class IamClient:
         return resp.json().get('keys', [])
 
     # https://cloud.google.com/iam/credentials/reference/rest/v1/projects.serviceAccounts/signBlob
-    # pylint: disable=too-many-arguments
     def sign_blob(self,
                   payload,  # type: Optional[Union[str, bytes]]
                   service_account_email=None,  # type: Optional[str]

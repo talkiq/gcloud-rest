@@ -1,5 +1,5 @@
 import base64
-from typing import Union
+from typing import Union  # pylint: disable=unused-import
 
 
 def decode(payload):

@@ -5,10 +5,11 @@ import json
 import os
 import threading
 import time
-from typing import Any
-from typing import Dict
+import warnings
+from typing import Any   # pylint: disable=unused-import
+from typing import Dict  # pylint: disable=unused-import
 from typing import List  # pylint: disable=unused-import
-from typing import Optional
+from typing import Optional  # pylint: disable=unused-import
 
 try:
     from urllib.parse import urlencode
@@ -18,6 +19,12 @@ except ImportError:
     from urllib import quote_plus
 
 import backoff
+# N.B. the cryptography library is required when calling jwt.encrypt() with
+# algorithm='RS256'. It does not need to be imported here, but this allows us
+# to throw this error at load time rather than lazily during normal operations,
+# where plumbing this error through will require several changes to otherwise-
+# good error handling.
+import cryptography  # pylint: disable=unused-import
 import jwt
 import requests
 
@@ -55,7 +62,7 @@ def get_service_data(service):
         with open(service, 'r') as f:
             data = json.loads(f.read())
             return data
-    except FileNotFoundError:
+    except (IOError, OSError):
         # only warn users if they have explicitly set the service_file path
         if set_explicitly:
             raise
@@ -67,12 +74,24 @@ def get_service_data(service):
 class Token(object):
     # pylint: disable=too-many-instance-attributes
     def __init__(self,
+                 creds=None,  # type: Optional[str]
+                 google_api_lock=None,  # type: Optional[threading.RLock]
+                 scopes=None,  # type: Optional[List[str]]
+                 timeout=None,  # type: Optional[int]
                  service_file=None,  # type: Optional[str]
-                 session=None,  # type: requests.Session
-                 google_api_lock=None,  # type: threading.RLock
-                 scopes=None  # type: List[str]
+                 session=None,  # type: Optional[requests.Session]
                  ):
         # type: (...) -> None
+        if creds:
+            warnings.warn('creds is now deprecated for Token(),'
+                          'please use service_file instead',
+                          DeprecationWarning)
+            service_file = creds
+        if timeout:
+            warnings.warn(
+                'timeout arg is now deprecated for Token()',
+                DeprecationWarning)
+
         self.service_data = get_service_data(service_file)
         if self.service_data:
             self.token_type = Type(self.service_data['type'])
@@ -119,8 +138,19 @@ class Token(object):
         self.ensure_token()
         return self.access_token
 
+    def __str__(self):
+        # type: () -> str
+        return str(self.get())
+
+    def acquire(self):
+        # type: () -> str
+        warnings.warn('Token.acquire() is deprecated',
+                      'please use Token.acquire_access_token()',
+                      DeprecationWarning)
+        return self.acquire_access_token()
+
     def ensure_token(self):
-        # type: ()  -> None
+        # type: () -> None
         if not self.access_token:
             self.acquire_access_token()
             return
@@ -131,6 +161,13 @@ class Token(object):
             return
 
         self.acquire_access_token()
+
+    def ensure(self):
+        # type: () -> None
+        warnings.warn('Token.ensure() is deprecated',
+                      'please use Token.ensure_token()',
+                      DeprecationWarning)
+        self.ensure_token()
 
     def _refresh_authorized_user(self, timeout):
         # type: (int) -> requests.Response
@@ -169,12 +206,12 @@ class Token(object):
         payload = urlencode({
             'assertion': assertion,
             'grant_type': 'urn:ietf:params:oauth:grant-type:jwt-bearer',
-        }, quote_via=quote_plus)
+        })
         with self.google_api_lock:
             return self.session.post(self.token_uri, data=payload,
                                      headers=REFRESH_HEADERS, timeout=timeout)
 
-    @backoff.on_exception(backoff.expo, Exception, max_tries=5)  # type: ignore
+    @backoff.on_exception(backoff.expo, Exception, max_tries=1)  # type: ignore
     def acquire_access_token(self, timeout=10):
         # type: (int) -> None
         if not self.session:
