@@ -13,10 +13,8 @@ from typing import Optional  # pylint: disable=unused-import
 
 try:
     from urllib.parse import urlencode
-    from urllib.parse import quote_plus
 except ImportError:
     from urllib import urlencode
-    from urllib import quote_plus
 
 import backoff
 # N.B. the cryptography library is required when calling jwt.encrypt() with
@@ -176,7 +174,7 @@ class Token(object):
             'client_id': self.service_data['client_id'],
             'client_secret': self.service_data['client_secret'],
             'refresh_token': self.service_data['refresh_token'],
-        }, quote_via=quote_plus)
+        })
         with self.google_api_lock:
             return self.session.post(self.token_uri, data=payload,
                                      headers=REFRESH_HEADERS, timeout=timeout)
@@ -211,7 +209,7 @@ class Token(object):
             return self.session.post(self.token_uri, data=payload,
                                      headers=REFRESH_HEADERS, timeout=timeout)
 
-    @backoff.on_exception(backoff.expo, Exception, max_tries=1)  # type: ignore
+    @backoff.on_exception(backoff.expo, Exception, max_tries=5)  # type: ignore
     def acquire_access_token(self, timeout=10):
         # type: (int) -> None
         if not self.session:
