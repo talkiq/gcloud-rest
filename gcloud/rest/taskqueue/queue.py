@@ -21,7 +21,7 @@ class TaskQueue(object):
 
         self.google_api_lock = google_api_lock or threading.RLock()
 
-        self.access_token = Token(creds=creds,
+        self.access_token = Token(service_file=creds,
                                   google_api_lock=self.google_api_lock,
                                   scopes=SCOPES)
 

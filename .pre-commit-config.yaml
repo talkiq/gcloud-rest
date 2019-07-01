@@ -32,12 +32,14 @@ repos:
         args:
         - --max-line-length=79
         - --ignore-imports=yes
+        - -d duplicate-code
         - -d fixme
         - -d import-error
         - -d invalid-name
         - -d locally-disabled
         - -d missing-docstring
         - -d too-few-public-methods
+        - -d too-many-arguments
         - -d useless-object-inheritance  # necessary for Python 2 compatibility
 -   repo: https://github.com/Lucas-C/pre-commit-hooks
     rev: v1.1.6
@@ -73,8 +75,7 @@ repos:
     rev: v1.4.0
     hooks:
     -   id: python-no-eval
-    -   id: python-no-log-warn
-    -   id: python-use-type-annotations
+    # -   id: python-no-log-warn TODO: fix the hook to not catch 'warnings.warn' and uncomment once done
     -   id: rst-backticks
 -   repo: https://github.com/Lucas-C/pre-commit-hooks-markup
     rev: v1.0.0
