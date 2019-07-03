@@ -5,6 +5,17 @@ Thanks for contributing to ``gcloud-rest``! We appreciate contributions of any
 size and hope to make it easy for you to dive in. Here's the thousand-foot
 overview of how we've set this project up.
 
+Project Setup
+-------------
+
+Our vision is that each module (``auth``, ``core``, ``kms``, etc.) should be
+released in its own PyPI package.
+
+Some modules are still bundled together in the ``gcloud-rest`` package. If you
+are making changes to one of those modules, please consider creating another
+PR to create a separate package for it. You can get inspiration from the
+`datastore module`_.
+
 Testing
 -------
 
@@ -15,9 +26,8 @@ code.
 You can get nox with ``pip install nox`` and run a specific project's tests with
 ``nox -f <project-folder>/noxfile.py``.
 
-Some project are still part of the ``gcloud-rest`` package. We are working on
-separating them but for now, run those projects' test together by running
-``nox``. The test scaffolding is in the root ``noxfile.py``.
+Modules in the ``gcloud-rest`` package are tested together, using the root
+``noxfile.py``. You can run their tests by running ``nox``.
 
 Local Development
 ~~~~~~~~~~~~~~~~~
@@ -112,6 +122,7 @@ If you are a maintainer looking to release a new version, see our
 `Release documentation`_.
 
 .. _conventional changelog: https://github.com/conventional-changelog/conventional-changelog
+.. _datastore module: https://github.com/talkiq/gcloud-rest/blob/master/datastore
 .. _nox: https://nox.readthedocs.io/en/latest/
 .. _pre-commit: http://pre-commit.com/
 .. _Pull Request: https://github.com/talkiq/gcloud-rest/pull/new/master
