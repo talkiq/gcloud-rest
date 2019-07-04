@@ -37,6 +37,13 @@ jobs:
       - deploy:
           name: upload to pypi
           command: |
+            # TODO: Simplify when everything is split into modules
+            # The check for the dash in the tag name won't be necessary
+            if [[ $CIRCLE_TAG =~ "-" ]]
+            then
+              export PROJECT=$(echo "${CIRCLE_TAG}" | sed 's/-.*//')
+              cd "${PROJECT}"
+            fi
             python setup.py sdist bdist_wheel
             twine upload dist/*
 
@@ -55,13 +62,27 @@ jobs:
       - deploy:
           name: create GitHub release
           command: |
-            export PREV_RELEASE=$(git tag --sort=version:refname | tail -n2 | head -n1)
-            [ "${PREV_RELEASE}" = "${CIRCLE_TAG}" ] && export PREV_RELEASE=$(git rev-list --max-parents=0 HEAD)
-            [ -z "${PREV_RELEASE}" ] && export PREV_RELEASE=$(git rev-list --max-parents=0 HEAD)
+            # TODO: Simplify when everything is split into modules
+            # The check for the dash in the tag name won't be necessary
+            if [[ $CIRCLE_TAG =~ "-" ]]
+            then
+              export PROJECT=$(echo "${CIRCLE_TAG}" | sed 's/-.*//')
+              export PREV_RELEASE=$(git tag --sort=version:refname | grep ${PROJECT} | tail -n2 | head -n1)
+              [ "${PREV_RELEASE}" = "${CIRCLE_TAG}" ] && export PREV_RELEASE=$(git rev-list --max-parents=0 HEAD)
+              [ -z "${PREV_RELEASE}" ] && export PREV_RELEASE=$(git rev-list --max-parents=0 HEAD)
 
-            git log ${PREV_RELEASE}..${CIRCLE_TAG} --pretty=format:'- %s' > release-description.md
-            ./bin/linux/amd64/github-release release -t "${CIRCLE_TAG}"
-            cat release-description.md | ./bin/linux/amd64/github-release edit -t ${CIRCLE_TAG} -d -
+              git log ${PREV_RELEASE}..${CIRCLE_TAG} --pretty=format:'- %s' > release-description.md
+              ./bin/linux/amd64/github-release release -t "${CIRCLE_TAG}"
+              cat release-description.md | grep ${PROJECT} | ./bin/linux/amd64/github-release edit -t ${CIRCLE_TAG} -d -
+            else
+              export PREV_RELEASE=$(git tag --sort=version:refname | tail -n2 | head -n1)
+              [ "${PREV_RELEASE}" = "${CIRCLE_TAG}" ] && export PREV_RELEASE=$(git rev-list --max-parents=0 HEAD)
+              [ -z "${PREV_RELEASE}" ] && export PREV_RELEASE=$(git rev-list --max-parents=0 HEAD)
+
+              git log ${PREV_RELEASE}..${CIRCLE_TAG} --pretty=format:'- %s' > release-description.md
+              ./bin/linux/amd64/github-release release -t "${CIRCLE_TAG}"
+              cat release-description.md | ./bin/linux/amd64/github-release edit -t ${CIRCLE_TAG} -d -
+            fi
 
 workflows:
   run-jobs:
@@ -110,7 +131,8 @@ workflows:
             branches:
               ignore: /.*/
             tags:
-              only: /[0-9]+\.[0-9]+\.[0-9]+/
+              # TODO make project name mandatory when split into modules
+              only: /([a-z]+-)?[0-9]+\.[0-9]+\.[0-9]+/
           requires:
             - lint-py27
             - lint-py35
@@ -124,7 +146,8 @@ workflows:
             branches:
               ignore: /.*/
             tags:
-              only: /[0-9]+\.[0-9]+\.[0-9]+/
+              # TODO make project name mandatory when split into modules
+              only: /([a-z]+-)?[0-9]+\.[0-9]+\.[0-9]+/
           requires:
             - lint-py27
             - lint-py35
