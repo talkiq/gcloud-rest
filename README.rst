@@ -11,6 +11,14 @@ support for ``asyncio``.
 
 |pypi| |circleci| |coverage| |pythons|
 
+Some of the client libraries live in separate packages:
+
+- |pypids| `Google Cloud Datastore`_ (`Datastore README`_)
+
+Note that all the modules will eventually be released separately, and the
+``gcloud-rest`` package will be deprecated.
+
+
 Installation
 ------------
 
@@ -21,8 +29,13 @@ Installation
 Usage
 -----
 
-This project currently exposes interfaces to ``CloudTasks``, ``KMS``, and
-``Storage``.
+This project currently exposes interfaces to ``CloudTasks``, ``Datastore``,
+``KMS``, and ``Storage``.
+
+For the libraries that are packaged separately, you can find usage examples
+in the corresponding README file.
+
+For the others, keep reading.
 
 Storage (see `bucket.py`_):
 
@@ -117,6 +130,9 @@ TaskManager (for ``CloudTasks``, see `manager.py`_):
     tm = TaskManager('my-project', 'taskqueue-name', worker_method)
     tm.find_tasks_forever()
 
+.. _Google Cloud Datastore: https://pypi.org/project/gcloud-rest-datastore/
+.. _Datastore README: https://github.com/talkiq/gcloud-rest/blob/master/datastore/README.rst
+
 .. _bucket.py: https://github.com/talkiq/gcloud-rest/blob/master/gcloud/rest/storage/bucket.py
 .. _client.py: https://github.com/talkiq/gcloud-rest/blob/master/gcloud/rest/kms/client.py
 .. _manager.py: https://github.com/talkiq/gcloud-rest/blob/master/gcloud/rest/taskqueue/manager.py
@@ -139,3 +155,7 @@ TaskManager (for ``CloudTasks``, see `manager.py`_):
 .. |pythons| image:: https://img.shields.io/pypi/pyversions/gcloud-rest.svg?style=flat-square
     :alt: Python Version Support
     :target: https://pypi.org/project/gcloud-rest/
+
+.. |pypids| image:: https://img.shields.io/pypi/v/gcloud-rest-datastore.svg?style=flat-square
+    :alt: Latest PyPI Version
+    :target: https://pypi.org/project/gcloud-rest-datastore/

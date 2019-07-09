@@ -1,0 +1,3 @@
+gcloud-rest >= 1.0.0, < 2.0.0
+requests[security] >= 2.0.0, < 3.0.0
+typing >= 3.0.0, < 4.0.0

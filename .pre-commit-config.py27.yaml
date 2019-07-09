@@ -39,7 +39,7 @@ repos:
         - -d locally-disabled
         - -d missing-docstring
         - -d too-few-public-methods
-        - -d too-many-arguments
+        - -d too-many-arguments # TODO stop ignoring this and fix the code
 -   repo: https://github.com/Lucas-C/pre-commit-hooks
     rev: v1.1.6
     hooks:
