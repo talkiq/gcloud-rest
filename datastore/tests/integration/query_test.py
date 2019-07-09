@@ -1,3 +1,5 @@
+import time
+
 import requests
 
 from gcloud.rest.datastore import Datastore
@@ -36,6 +38,10 @@ def test_query(creds, kind, project):
         ]
         ds.commit(mutations, transaction=transaction, session=s)
 
+        # TODO: figure out why this is flaky without the sleep
+        # Seems to only be flaky intermittently in py2.
+        time.sleep(2)
+
         after = ds.runQuery(query, session=s)
         assert len(after.entity_results) == num_results + 2
 
@@ -64,6 +70,10 @@ def test_gql_query(creds, kind, project):
                              properties={'value': 42}),
         ]
         ds.commit(mutations, transaction=transaction, session=s)
+
+        # TODO: figure out why this is flaky without the sleep
+        # Seems to only be flaky intermittently in py2.
+        time.sleep(2)
 
         after = ds.runQuery(query, session=s)
         assert len(after.entity_results) == num_results + 3
