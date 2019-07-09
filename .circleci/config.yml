@@ -114,6 +114,7 @@ workflows:
               only: /.*/
 
       - old_nox:
+          name: test
           filters:
             tags:
               only: /.*/
@@ -138,7 +139,7 @@ workflows:
             - lint-py35
             - lint-py36
             - lint-py37
-            - old_nox
+            - test
             - test-datastore
       - github:
           context: org-global
@@ -153,5 +154,5 @@ workflows:
             - lint-py35
             - lint-py36
             - lint-py37
-            - old_nox
+            - test
             - test-datastore
