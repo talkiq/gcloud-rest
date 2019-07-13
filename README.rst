@@ -3,11 +3,14 @@ RESTful Google Cloud Client Library for Python
 
 This project is a collection of Google Cloud client libraries for the REST-only
 APIs; its *raison d'etre* is to implement a simple `CloudTasks API`_ as well as
-a more abstract TaskManager.
+a more abstract TaskManager. That... isn't as relevant now that Google has
+deprecated PullQueue-style tasks, but this library will continue to be OSS to
+provide support to anyone looking for a concurrency-friendly approach to
+interacting with the GCP APIs in Python 2 and 3.
 
 If you don't need to support Python 2, you probably want to use `gcloud-aio`_,
 which has support for all the same APIs (and more!) and additionally includes
-support for ``asyncio``.
+native support for ``asyncio``.
 
 |pypi| |circleci| |coverage| |pythons|
 
@@ -18,13 +21,18 @@ Some of the client libraries live in separate packages:
 Note that all the modules will eventually be released separately, and the
 ``gcloud-rest`` package will be deprecated.
 
-
 Installation
 ------------
 
 .. code-block:: console
 
     $ pip install --upgrade gcloud-rest
+
+(or, for the packages released independently):
+
+.. code-block:: console
+
+    $ pip install --upgrade gcloud-rest-datastore
 
 Usage
 -----
@@ -130,15 +138,14 @@ TaskManager (for ``CloudTasks``, see `manager.py`_):
     tm = TaskManager('my-project', 'taskqueue-name', worker_method)
     tm.find_tasks_forever()
 
-.. _Google Cloud Datastore: https://pypi.org/project/gcloud-rest-datastore/
-.. _Datastore README: https://github.com/talkiq/gcloud-rest/blob/master/datastore/README.rst
-
 .. _bucket.py: https://github.com/talkiq/gcloud-rest/blob/master/gcloud/rest/storage/bucket.py
 .. _client.py: https://github.com/talkiq/gcloud-rest/blob/master/gcloud/rest/kms/client.py
+.. _CloudTasks API: https://cloud.google.com/cloud-tasks/docs/reference/rest/v2beta2/projects.locations.queues.tasks
+.. _Datastore README: https://github.com/talkiq/gcloud-rest/blob/master/datastore/README.rst
+.. _gcloud-aio: https://github.com/talkiq/gcloud-aio
+.. _Google Cloud Datastore: https://pypi.org/project/gcloud-rest-datastore/
 .. _manager.py: https://github.com/talkiq/gcloud-rest/blob/master/gcloud/rest/taskqueue/manager.py
 .. _queue.py: https://github.com/talkiq/gcloud-rest/blob/master/gcloud/rest/taskqueue/queue.py
-.. _CloudTasks API: https://cloud.google.com/cloud-tasks/docs/reference/rest/v2beta2/projects.locations.queues.tasks
-.. _gcloud-aio: https://github.com/talkiq/gcloud-aio
 
 .. |pypi| image:: https://img.shields.io/pypi/v/gcloud-rest.svg?style=flat-square
     :alt: Latest PyPI Version
