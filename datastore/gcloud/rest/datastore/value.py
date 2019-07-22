@@ -5,6 +5,7 @@ from typing import Dict  # pylint: disable=unused-import
 from gcloud.rest.datastore.constants import TypeName
 from gcloud.rest.datastore.constants import TYPES
 from gcloud.rest.datastore.key import Key
+from gcloud.rest.datastore.lat_lng import LatLng
 
 
 # https://cloud.google.com/datastore/docs/reference/data/rest/v1/projects/runQuery#value
@@ -43,6 +44,8 @@ class Value(object):
                                               '%Y-%m-%dT%H:%M:%S.%f000Z')
                 elif value_type == cls.key_kind:
                     value = cls.key_kind.from_repr(data[json_key])
+                elif value_type == LatLng:
+                    value = LatLng.from_repr(data[json_key])
                 else:
                     value = value_type(data[json_key])
                 break
@@ -61,7 +64,7 @@ class Value(object):
     def to_repr(self):
         # type: () -> Dict[str, Any]
         value_type = self._infer_type(self.value)
-        if value_type == TypeName.KEY:
+        if value_type in {TypeName.GEOPOINT, TypeName.KEY}:
             value = self.value.to_repr()
         elif value_type == TypeName.TIMESTAMP:
             value = self.value.strftime('%Y-%m-%dT%H:%M:%S.%f000Z')

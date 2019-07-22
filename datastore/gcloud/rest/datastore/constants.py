@@ -1,6 +1,8 @@
 import enum
 from datetime import datetime as dt
 
+from gcloud.rest.datastore.lat_lng import LatLng
+
 
 class CompositeFilterOperator(enum.Enum):
     AND = 'AND'
@@ -61,6 +63,7 @@ class TypeName(enum.Enum):
     BLOB = 'blobValue'
     BOOLEAN = 'booleanValue'
     DOUBLE = 'doubleValue'
+    GEOPOINT = 'geoPointValue'
     INTEGER = 'integerValue'
     KEY = 'keyValue'
     NULL = 'nullValue'
@@ -68,13 +71,14 @@ class TypeName(enum.Enum):
     TIMESTAMP = 'timestampValue'
 
 
-# TODO: add types for geoPointValue and arrayValue
+# TODO: add type for arrayValue
 TYPES = {
     bool: TypeName.BOOLEAN,
     bytes: TypeName.BLOB,
     dt: TypeName.TIMESTAMP,
     float: TypeName.DOUBLE,
     int: TypeName.INTEGER,
+    LatLng: TypeName.GEOPOINT,
     str: TypeName.STRING,
     type(None): TypeName.NULL,
 }
