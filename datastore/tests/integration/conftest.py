@@ -19,10 +19,10 @@ def kind():
 @pytest.fixture(scope='module')  # type: ignore
 def project():
     # type: () -> str
-    return 'voiceai-staging'
+    return 'dialpad-oss'
 
 
 @pytest.fixture(scope='module')  # type: ignore
 def export_bucket_name():
     # type: () -> str
-    return 'voiceai-staging-public-test'
+    return 'dialpad-oss-public-test'
