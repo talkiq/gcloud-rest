@@ -10,7 +10,7 @@ def creds():
 
 @pytest.fixture(scope='module')
 def project():
-    return 'voiceai-staging'
+    return 'dialpad-oss'
 
 
 @pytest.fixture(scope='module')
