@@ -73,10 +73,10 @@ repos:
         args:
         - --ignore=E501,W503,F401,F811
 -   repo: https://github.com/pre-commit/pygrep-hooks
-    rev: v1.4.0
+    rev: v1.4.1
     hooks:
     -   id: python-no-eval
-    # -   id: python-no-log-warn TODO: fix the hook to not catch 'warnings.warn' and uncomment once done
+    -   id: python-no-log-warn
     -   id: rst-backticks
 -   repo: https://github.com/Lucas-C/pre-commit-hooks-markup
     rev: v1.0.0
