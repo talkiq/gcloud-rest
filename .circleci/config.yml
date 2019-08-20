@@ -7,7 +7,7 @@ jobs:
   # TODO: Remove old_nox when everything is split into modules
   old_nox:
     docker:
-      - image: thekevjames/nox:2019.5.30
+      - image: thekevjames/nox:2019.8.20
     environment:
       GOOGLE_APPLICATION_CREDENTIALS: /key.json
     steps:
@@ -17,7 +17,7 @@ jobs:
 
   nox:
     docker:
-      - image: thekevjames/nox:2019.5.30
+      - image: thekevjames/nox:2019.8.20
     environment:
       GOOGLE_APPLICATION_CREDENTIALS: /key.json
     parameters:
