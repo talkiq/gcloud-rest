@@ -1,6 +1,5 @@
 {
-  "assignees": ["TheKevJames"],
-  "extends": ["github>thekevjames/tools"],
+  "extends": ["github>talkiq/common"],
   "packageRules": [{
     "managers": ["pip_requirements"],
     "rangeStrategy": "widen"
