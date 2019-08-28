@@ -44,7 +44,7 @@ class Entity(object):
 class EntityResult(object):
     entity_kind = Entity
 
-    def __init__(self, entity, version, cursor=''):
+    def __init__(self, entity, version='', cursor=''):
         # type: (Entity, str, str) -> None
         self.entity = entity
         self.version = version
@@ -66,15 +66,17 @@ class EntityResult(object):
     @classmethod
     def from_repr(cls, data):
         # type: (Dict[str, Any]) -> EntityResult
-        return cls(cls.entity_kind.from_repr(data['entity']), data['version'],
+        return cls(cls.entity_kind.from_repr(data['entity']),
+                   data.get('version', ''),
                    data.get('cursor', ''))
 
     def to_repr(self):
         # type: () -> Dict[str, Any]
         data = {
             'entity': self.entity.to_repr(),
-            'version': self.version,
         }
+        if self.version:
+            data['version'] = self.version
         if self.cursor:
             data['cursor'] = self.cursor
 
