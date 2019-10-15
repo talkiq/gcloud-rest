@@ -1,7 +1,7 @@
 repository:
   name: gcloud-rest
-  description: RESTful Google Cloud Client Library for Python
-  homepage: https://pypi.org/project/gcloud-rest/
+  description: [deprecated] RESTful Google Cloud Client Library for Python
+  homepage: https://pypi.org/project/gcloud-aio/
   private: false
 
   has_issues: true

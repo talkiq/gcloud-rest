@@ -4,30 +4,6 @@ orbs:
   linter: thekevjames/linter@0.1
 
 jobs:
-  # TODO: Remove old_nox when everything is split into modules
-  old_nox:
-    docker:
-      - image: thekevjames/nox:2019.8.20
-    environment:
-      GOOGLE_APPLICATION_CREDENTIALS: /key.json
-    steps:
-      - run: echo ${GOOGLE_SERVICE_PUBLIC} | base64 -d > ${GOOGLE_APPLICATION_CREDENTIALS}
-      - checkout
-      - run: nox
-
-  nox:
-    docker:
-      - image: thekevjames/nox:2019.8.20
-    environment:
-      GOOGLE_APPLICATION_CREDENTIALS: /key.json
-    parameters:
-      folder:
-        type: string
-    steps:
-      - run: echo ${GOOGLE_SERVICE_PUBLIC} | base64 -d > ${GOOGLE_APPLICATION_CREDENTIALS}
-      - checkout
-      - run: nox -f <<parameters.folder>>/noxfile.py
-
   pypi:
     docker:
       - image: python:3.7.4-slim
@@ -87,45 +63,6 @@ jobs:
 workflows:
   run-jobs:
     jobs:
-      - linter/pre-commit:
-          name: lint-py27
-          config_file: .pre-commit-config.py27.yaml
-          python_version: 2.7.14
-          filters:
-            tags:
-              only: /.*/
-      - linter/pre-commit:
-          name: lint-py35
-          python_version: 3.5.7
-          filters:
-            tags:
-              only: /.*/
-      - linter/pre-commit:
-          name: lint-py36
-          python_version: 3.6.8
-          filters:
-            tags:
-              only: /.*/
-      - linter/pre-commit:
-          name: lint-py37
-          python_version: 3.7.3
-          filters:
-            tags:
-              only: /.*/
-
-      - old_nox:
-          name: test
-          filters:
-            tags:
-              only: /.*/
-
-      - nox:
-          name: test-datastore
-          folder: datastore
-          filters:
-            tags:
-              only: /.*/
-
       - pypi:
           context: org-global
           filters:
@@ -134,13 +71,6 @@ workflows:
             tags:
               # TODO make project name mandatory when split into modules
               only: /([a-z]+-)?[0-9]+\.[0-9]+\.[0-9]+/
-          requires:
-            - lint-py27
-            - lint-py35
-            - lint-py36
-            - lint-py37
-            - test
-            - test-datastore
       - github:
           context: org-global
           filters:
@@ -149,10 +79,3 @@ workflows:
             tags:
               # TODO make project name mandatory when split into modules
               only: /([a-z]+-)?[0-9]+\.[0-9]+\.[0-9]+/
-          requires:
-            - lint-py27
-            - lint-py35
-            - lint-py36
-            - lint-py37
-            - test
-            - test-datastore

@@ -7,24 +7,21 @@ PACKAGE_ROOT = os.path.abspath(os.path.dirname(__file__))
 with open(os.path.join(PACKAGE_ROOT, 'README.rst')) as f:
     README = f.read()
 
-with open(os.path.join(PACKAGE_ROOT, 'requirements.txt')) as f:
-    REQUIREMENTS = [r.strip() for r in f.readlines()]
-
 
 setuptools.setup(
     name='gcloud-rest',
-    version='2.0.0',
-    description='RESTful Python Client for Google Cloud',
+    version='3.0.0',
+    description='[deprecated] RESTful Python Client for Google Cloud',
     long_description=README,
     namespace_packages=[
         'gcloud',
         'gcloud.rest',
     ],
     packages=setuptools.find_packages(exclude=('tests',)),
-    install_requires=REQUIREMENTS,
-    author='TalkIQ',
-    author_email='engineering@talkiq.com',
-    url='https://github.com/talkiq/gcloud-rest',
+    install_requires=[],
+    author='Vi Engineering',
+    author_email='voiceai-eng@dialpad.com',
+    url='https://github.com/talkiq/gcloud-aio',
     platforms='Posix; MacOS X; Windows',
     include_package_data=True,
     zip_safe=False,
